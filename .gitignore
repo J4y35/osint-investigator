@@ -12,3 +12,7 @@ dist/
 build/
 *.egg-info/
 .DS_Store
+
+# Throwaway commit-message scratch files used by the assistant when writing
+# multi-line messages from a non-interactive shell.
+.git-commit-msg.tmp

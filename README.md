@@ -41,8 +41,13 @@ The author provides this software "as is" and disclaims liability for misuse. Se
 ## Features
 
 - `email` — Run ~120 Holehe probes against an email and print a Rich table or JSON.
-- `person` — Playwright-driven search of people-finder sites (cyberbackgroundchecks scaffold ready).
-- `username` — Check a handle across GitHub, Reddit, Twitter, Instagram, TikTok, etc.
+- `person` — Multi-source person lookup. Today: **CourtListener** (free federal court
+  records via the v4 REST API) and a Playwright scaffold for **cyberbackgroundchecks**
+  (the site is gated by Cloudflare Turnstile — the source reports `blocked` with a
+  clear message rather than silently returning zero hits).
+- `username` — Check a handle across ~460 sites (Sherlock catalogue bundled into the
+  wheel). Filtering via `--site`, `--top`, `--include-nsfw`; concurrency capped via
+  `--concurrency`; full catalogue with `--all`.
 - `breach` — Lookup against Have I Been Pwned + DDoSecrets release index.
 - `--json` flag on every command for clean piping into `jq`, files, or other tooling.
 - Polite scraping by default (configurable delay, identifiable User-Agent).
@@ -60,13 +65,15 @@ osint-investigator/
 │   ├── cli.py              # Typer root app
 │   ├── config.py           # pydantic-settings, .env loader
 │   ├── utils.py            # shared helpers (console, JSON printer, polite sleep)
+│   ├── data/               # bundled package data (Sherlock catalogue snapshot)
 │   └── modules/
 │       ├── __init__.py
-│       ├── email_module.py     # Holehe orchestrator (fully working)
-│       ├── person_module.py    # Playwright scaffold
-│       ├── username_module.py  # Multi-site handle probe
+│       ├── email_module.py     # Holehe orchestrator
+│       ├── person_module.py    # CourtListener + Playwright (Cloudflare-aware)
+│       ├── username_module.py  # Sherlock-backed handle probe
+│       ├── sherlock_sites.py   # Sherlock data.json loader + site selection
 │       └── breach_module.py    # HIBP + DDoSecrets
-└── tests/                  # (optional) pytest skeleton
+└── tests/                  # pytest suite (offline; fixtures under tests/fixtures/)
 ```
 
 ## Quickstart (macOS / Linux)

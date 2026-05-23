@@ -1,0 +1,366 @@
+{
+  "count": 288197,
+  "document_count": 1230497,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "assignedTo": "Magdeline D. Coleman",
+      "assigned_to_id": 8934,
+      "attorney": [
+        "BRAD J. SADEK"
+      ],
+      "attorney_id": [
+        8029195
+      ],
+      "caseName": "John Smith",
+      "case_name_full": "",
+      "cause": "",
+      "chapter": "13",
+      "court": "United States Bankruptcy Court, E.D. Pennsylvania",
+      "court_citation_string": "Bankr. E.D. Pa.",
+      "court_id": "paeb",
+      "dateArgued": null,
+      "dateFiled": "2022-09-21",
+      "dateTerminated": "2023-03-13",
+      "docketNumber": "22-12528",
+      "docket_absolute_url": "/docket/65365088/john-smith/",
+      "docket_id": 65365088,
+      "firm": [
+        "Sadek Law Offices, LLC",
+        "Sadek and Cooper"
+      ],
+      "firm_id": [
+        858080,
+        761242
+      ],
+      "jurisdictionType": "",
+      "juryDemand": "",
+      "meta": {
+        "timestamp": "2025-03-21T20:50:34.198138Z",
+        "date_created": "2022-09-21T18:33:03.383689Z",
+        "score": {
+          "bm25": 206.97348
+        },
+        "more_docs": true
+      },
+      "pacer_case_id": "505893",
+      "party": [
+        "KENNETH E. WEST",
+        "United States Trustee",
+        "John Smith"
+      ],
+      "party_id": [
+        12053840,
+        12053838,
+        12053839
+      ],
+      "recap_documents": [
+        {
+          "absolute_url": "/docket/65365088/16/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Chapter 13 Plan Filed by John Smith. (SADEK, BRAD) (Entered: 11/07/2022)",
+          "docket_entry_id": 211161389,
+          "document_number": 16,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2022-11-07",
+          "entry_number": 16,
+          "filepath_local": "recap/gov.uscourts.paeb.505893/gov.uscourts.paeb.505893.16.0.pdf",
+          "id": 217094406,
+          "is_available": true,
+          "meta": {
+            "timestamp": "2025-03-21T20:50:34.247367Z",
+            "date_created": "2022-11-07T22:04:26.744147Z"
+          },
+          "pacer_doc_id": "152031664559",
+          "page_count": 6,
+          "short_description": "Chapter 13 Plan",
+          "snippet": "        Case 22-12528-mdc                   Doc 16      Filed 11/07/22 Entered 11/07/22 16:55:56                                   Desc Main\n                                                        Document      Page 1 of 6                                                           11/07/22 4:45PM\n\n\n                                                              L.B.F. 3015.1\n\n                                      UNITED STATES BANKRUPTCY COURT\n                                  FOR THE EASTERN DISTR"
+        },
+        {
+          "absolute_url": "/docket/65365088/4/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Certificate of Credit Counseling Filed by BRAD J. SADEK on behalf of John Smith. (SADEK, BRAD) (Entered: 09/21/2022)",
+          "docket_entry_id": 206980367,
+          "document_number": 4,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2022-09-21",
+          "entry_number": 4,
+          "filepath_local": null,
+          "id": 212847687,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2025-03-21T20:50:34.247367Z",
+            "date_created": "2022-09-21T18:33:03.396016Z"
+          },
+          "pacer_doc_id": "152031568249",
+          "page_count": null,
+          "short_description": "Certificate of Credit Counseling",
+          "snippet": ""
+        },
+        {
+          "absolute_url": "/docket/65365088/3/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Statement of Social Security Number Received. Filed by BRAD J. SADEK on behalf of John Smith. (SADEK, BRAD) (Entered: 09/21/2022)",
+          "docket_entry_id": 210480666,
+          "document_number": 3,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2022-09-21",
+          "entry_number": 3,
+          "filepath_local": null,
+          "id": 216403308,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2025-03-21T20:50:34.247367Z",
+            "date_created": "2022-10-31T14:12:12.005634Z"
+          },
+          "pacer_doc_id": "152031568238",
+          "page_count": null,
+          "short_description": "Statement of Social Security Number",
+          "snippet": ""
+        }
+      ],
+      "referredTo": null,
+      "referred_to_id": null,
+      "suitNature": "",
+      "trustee_str": "WEST, KENNETH E."
+    },
+    {
+      "assignedTo": null,
+      "assigned_to_id": null,
+      "attorney": [
+        "Aaron M Weinberg",
+        "Nathan E Delman",
+        "Mary E Walters"
+      ],
+      "attorney_id": [
+        4653064,
+        4653065,
+        4653063
+      ],
+      "caseName": "John Smith",
+      "case_name_full": "",
+      "cause": "",
+      "chapter": "13",
+      "court": "United States Bankruptcy Court, N.D. Illinois",
+      "court_citation_string": "Bankr. N.D. Ill.",
+      "court_id": "ilnb",
+      "dateArgued": null,
+      "dateFiled": "2015-12-23",
+      "dateTerminated": "2021-06-01",
+      "docketNumber": "15-43148",
+      "docket_absolute_url": "/docket/7878945/john-smith/",
+      "docket_id": 7878945,
+      "firm": [
+        "The Semrad Law Firm, LLC"
+      ],
+      "firm_id": [
+        293965
+      ],
+      "jurisdictionType": "",
+      "juryDemand": "",
+      "meta": {
+        "timestamp": "2025-03-04T16:09:13.821322Z",
+        "date_created": "2018-09-14T16:43:04.624445Z",
+        "score": {
+          "bm25": 205.54074
+        },
+        "more_docs": true
+      },
+      "pacer_case_id": "1338657",
+      "party": [
+        "Marilyn O Marshall",
+        "Patrick S Layng",
+        "John Smith"
+      ],
+      "party_id": [
+        6970736,
+        6970734,
+        6970735
+      ],
+      "recap_documents": [
+        {
+          "absolute_url": "/docket/7878945/10/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Proposed Order to Employer to Pay the Trustee Filed by Mary E Walters on behalf of John Smith. (Walters, Mary) (Entered: 01/02/2016)",
+          "docket_entry_id": 79366123,
+          "document_number": 10,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2016-01-02",
+          "entry_number": 10,
+          "filepath_local": null,
+          "id": 83509589,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-02T05:34:46.749670Z",
+            "date_created": "2019-05-14T21:50:36.338878Z"
+          },
+          "pacer_doc_id": "066055071950",
+          "page_count": null,
+          "short_description": "",
+          "snippet": ""
+        },
+        {
+          "absolute_url": "/docket/7878945/14/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Attachment(s) A Filed by Aaron M Weinberg on behalf of John Smith (RE: 13 Motion to Redact Filing per Rule 9037(a)). (Weinberg, Aaron) (Entered: 01/27/2016)",
+          "docket_entry_id": 79366146,
+          "document_number": 14,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2016-01-27",
+          "entry_number": 14,
+          "filepath_local": null,
+          "id": 83509612,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-02T05:34:46.861911Z",
+            "date_created": "2019-05-14T21:50:36.551103Z"
+          },
+          "pacer_doc_id": "066055375877",
+          "page_count": null,
+          "short_description": "",
+          "snippet": ""
+        },
+        {
+          "absolute_url": "/docket/7878945/21/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "Amended Statement of Financial Affairs for Individual Filed by Aaron M Weinberg on behalf of John Smith. (Attachments: # 1 Signature Pages) (Weinberg, Aaron) (Entered: 02/12/2016)",
+          "docket_entry_id": 79366188,
+          "document_number": 21,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2016-02-12",
+          "entry_number": 21,
+          "filepath_local": null,
+          "id": 83509654,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-02T05:34:48.109975Z",
+            "date_created": "2019-05-14T21:50:36.922280Z"
+          },
+          "pacer_doc_id": "066055592982",
+          "page_count": null,
+          "short_description": "",
+          "snippet": ""
+        }
+      ],
+      "referredTo": null,
+      "referred_to_id": null,
+      "suitNature": "",
+      "trustee_str": "Marshall, Marilyn O"
+    },
+    {
+      "assignedTo": "James P. Smith",
+      "assigned_to_id": 8763,
+      "attorney": [],
+      "attorney_id": [],
+      "caseName": "John Smith",
+      "case_name_full": "",
+      "cause": "",
+      "chapter": "13",
+      "court": "United States Bankruptcy Court, M.D. Georgia",
+      "court_citation_string": "Bankr. M.D. Ga.",
+      "court_id": "gamb",
+      "dateArgued": null,
+      "dateFiled": "2015-02-26",
+      "dateTerminated": "2015-08-25",
+      "docketNumber": "15-30215",
+      "docket_absolute_url": "/docket/47183228/john-smith/",
+      "docket_id": 47183228,
+      "firm": [],
+      "firm_id": [],
+      "jurisdictionType": "",
+      "juryDemand": "",
+      "meta": {
+        "timestamp": "2025-02-23T21:54:53.795656Z",
+        "date_created": "2021-01-28T02:10:13.115762Z",
+        "score": {
+          "bm25": 205.47168
+        },
+        "more_docs": true
+      },
+      "pacer_case_id": "349985",
+      "party": [
+        "John Smith"
+      ],
+      "party_id": [],
+      "recap_documents": [
+        {
+          "absolute_url": "/docket/47183228/6/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "",
+          "docket_entry_id": 246482720,
+          "document_number": 6,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2015-02-26",
+          "entry_number": 6,
+          "filepath_local": null,
+          "id": 252647875,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-27T10:57:32.891949Z",
+            "date_created": "2023-03-19T00:40:10.682707Z"
+          },
+          "pacer_doc_id": "052015521477",
+          "page_count": null,
+          "short_description": "Meeting of Creditors 13",
+          "snippet": ""
+        },
+        {
+          "absolute_url": "/docket/47183228/7/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "",
+          "docket_entry_id": 246664214,
+          "document_number": 7,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2015-03-02",
+          "entry_number": 7,
+          "filepath_local": null,
+          "id": 252829382,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-27T11:27:43.138147Z",
+            "date_created": "2023-03-19T02:47:33.293833Z"
+          },
+          "pacer_doc_id": "052015529468",
+          "page_count": null,
+          "short_description": "BNC Certificate of Mailing",
+          "snippet": ""
+        },
+        {
+          "absolute_url": "/docket/47183228/8/john-smith/",
+          "attachment_number": null,
+          "cites": [],
+          "description": "",
+          "docket_entry_id": 246664213,
+          "document_number": 8,
+          "document_type": "PACER Document",
+          "entry_date_filed": "2015-03-02",
+          "entry_number": 8,
+          "filepath_local": null,
+          "id": 252829381,
+          "is_available": false,
+          "meta": {
+            "timestamp": "2024-05-27T11:27:43.159791Z",
+            "date_created": "2023-03-19T02:47:33.293770Z"
+          },
+          "pacer_doc_id": "052015529469",
+          "page_count": null,
+          "short_description": "BNC Certificate of Mailing",
+          "snippet": ""
+        }
+      ],
+      "referredTo": null,
+      "referred_to_id": null,
+      "suitNature": "",
+      "trustee_str": "Hope, Camille"
+    }
+  ]
+}
