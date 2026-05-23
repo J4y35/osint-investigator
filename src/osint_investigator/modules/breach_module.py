@@ -105,17 +105,27 @@ async def _lookup_hibp(query: str, client: httpx.AsyncClient) -> list[BreachHit]
 
 
 # ── DDoSecrets ───────────────────────────────────────────────────────────────
-async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> list[BreachHit]:
-    """Naive substring-match against the DDoSecrets release listing.
+# DDoSecrets retired its MediaWiki in 2024-2025. The current catalogue lives at
+# /all_articles/recent and uses /article/<slug> URLs. Each article appears
+# twice in the HTML (once as a title link, once as a "Read more" link), so we
+# dedupe by href before matching the query.
+_DDOSECRETS_INDEX = "https://ddosecrets.org/all_articles/recent"
 
-    The site is JS-light enough that an HTTP GET works; if/when it changes to a
-    client-rendered SPA, swap to Playwright like the ``person`` module.
+
+async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> list[BreachHit]:
+    """Substring-match the DDoSecrets release catalogue against ``query``.
+
+    Returns every article whose title contains ``query`` (case-insensitive).
+    This is best-suited to dataset names ("blueleaks", "epstein") rather than
+    individual emails — DDoSecrets indexes leaks, not their contents.
     """
     settings = get_settings()
-    url = "https://ddosecrets.org/wiki/Special:AllPages"
     try:
         await async_polite_sleep(settings.request_delay)
-        resp = await client.get(url, headers={"User-Agent": settings.user_agent})
+        resp = await client.get(
+            _DDOSECRETS_INDEX,
+            headers={"User-Agent": settings.user_agent},
+        )
     except Exception as exc:  # noqa: BLE001
         err_console.print(f"[yellow]ddosecrets request failed:[/] {exc}")
         return []
@@ -124,21 +134,34 @@ async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> list[Brea
         err_console.print(f"[yellow]ddosecrets status[/] {resp.status_code}")
         return []
 
-    # Grep the AllPages index for the query (case-insensitive). Replace this
-    # with a real BeautifulSoup parser once you've decided on a match heuristic.
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(resp.text, "lxml")
     out: list[BreachHit] = []
-    q = query.lower()
-    for a in soup.select("a[href^='/wiki/']"):
+    seen_hrefs: set[str] = set()
+    q = query.lower().strip()
+    if not q:
+        return []
+
+    for a in soup.select("a[href^='/article/']"):
+        href = a.get("href") or ""
+        if href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
+
+        # The title-link's text is the article title; the "Read more" link is
+        # the literal string "Read more". Skip the latter; we already have the
+        # title from the first occurrence of this href.
         title = (a.get_text() or "").strip()
-        if q and q in title.lower():
+        if title.lower() == "read more":
+            continue
+
+        if q in title.lower():
             out.append(
                 BreachHit(
                     source="DDoSecrets",
                     name=title,
-                    url=f"https://ddosecrets.org{a.get('href')}",
+                    url=f"https://ddosecrets.org{href}",
                 )
             )
     return out
