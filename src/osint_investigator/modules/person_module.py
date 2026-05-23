@@ -30,6 +30,7 @@ import typer
 from rich.table import Table
 
 from osint_investigator.config import get_settings
+from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
     async_polite_sleep,
     console,
@@ -194,7 +195,7 @@ async def _search_courtlistener(first: str, last: str, state: str | None) -> Sou
             headers={"User-Agent": settings.user_agent, "Accept": "application/json"},
         ) as client:
             await async_polite_sleep(settings.request_delay)
-            resp = await client.get(url, params=params)
+            resp = await retrying_get(client, url, params=params)
         if resp.status_code != 200:
             return SourceResult(
                 "courtlistener",

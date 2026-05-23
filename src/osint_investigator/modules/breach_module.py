@@ -2,27 +2,31 @@
 
 Two sources are wired up:
 
-1. **Have I Been Pwned (HIBP)** — authoritative breach index. Requires an API
-   key (``HIBP_API_KEY`` in `.env`).
+1. **Have I Been Pwned (HIBP)** — authoritative breach index. Requires an
+   API key (``HIBP_API_KEY`` in `.env`); without one the source reports
+   ``no_auth`` rather than silently returning nothing.
 2. **DDoSecrets (ddosecrets.org)** — public leak catalogue. We fetch the
-   front-page listing and grep for the query (skeleton; tighten the matcher
-   once you've decided what counts as a hit).
+   recent-articles page and substring-match the query against article
+   titles. Best for dataset names ("blueleaks", "epstein"), not
+   individual emails.
 
-Add new sources by writing another ``_lookup_*`` coroutine and registering it
-in :data:`SOURCES`.
+Like ``person`` and ``domain``, each source returns a :class:`BreachResult`
+with explicit status (``ok`` / ``empty`` / ``rate_limited`` / ``no_auth``
+/ ``error``) so the CLI surfaces *why* a source returned nothing.
 """
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
-from typing import Annotated, Any
+from dataclasses import asdict, dataclass, field
+from typing import Annotated, Any, Literal
 
 import httpx
 import typer
 from rich.table import Table
 
 from osint_investigator.config import get_settings
+from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
     async_polite_sleep,
     console,
@@ -39,6 +43,11 @@ app = typer.Typer(
 )
 
 
+# ── Data model ───────────────────────────────────────────────────────────────
+
+BreachStatus = Literal["ok", "empty", "rate_limited", "no_auth", "error"]
+
+
 @dataclass(slots=True)
 class BreachHit:
     source: str
@@ -48,116 +57,67 @@ class BreachHit:
     url: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "source": self.source,
-            "name": self.name,
-            "date": self.date,
-            "description": self.description,
-            "url": self.url,
-            "extra": self.extra,
-        }
+
+@dataclass(slots=True)
+class BreachResult:
+    """Outcome of querying one breach source."""
+
+    source: str
+    status: BreachStatus
+    hits: list[BreachHit] = field(default_factory=list)
+    message: str | None = None
 
 
-# ── Have I Been Pwned ────────────────────────────────────────────────────────
-async def _lookup_hibp(query: str, client: httpx.AsyncClient) -> list[BreachHit]:
-    """Look up an email in HIBP's `breachedaccount` endpoint."""
-    settings = get_settings()
-    if not settings.hibp_api_key:
-        err_console.print("[dim]hibp:[/] no HIBP_API_KEY set — skipping.")
-        return []
+# ── Pure parsers (tested with fixtures) ──────────────────────────────────────
 
-    if "@" not in query:
-        # HIBP's breachedaccount endpoint is email-only.
-        return []
 
-    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{query}"
-    headers = {
-        "hibp-api-key": settings.hibp_api_key.get_secret_value(),
-        "User-Agent": settings.user_agent,
-    }
-    try:
-        await async_polite_sleep(settings.request_delay)
-        resp = await client.get(url, headers=headers, params={"truncateResponse": "false"})
-    except Exception as exc:  # noqa: BLE001
-        err_console.print(f"[yellow]hibp request failed:[/] {exc}")
-        return []
+def parse_hibp_response(payload: list[dict[str, Any]]) -> list[BreachHit]:
+    """Map HIBP's ``breachedaccount`` JSON response to :class:`BreachHit`s.
 
-    if resp.status_code == 404:
-        return []  # No breaches — HIBP signals this with 404.
-    if resp.status_code != 200:
-        err_console.print(
-            f"[yellow]hibp unexpected status[/] {resp.status_code}: {resp.text[:200]}"
-        )
-        return []
-
+    The endpoint returns a list of breach objects (with ``truncateResponse=false``);
+    we keep name, breach date, description, and data classes.
+    """
     out: list[BreachHit] = []
-    for b in resp.json():
+    for b in payload or []:
+        name = b.get("Name") or "?"
         out.append(
             BreachHit(
                 source="HIBP",
-                name=b.get("Name", "?"),
+                name=name,
                 date=b.get("BreachDate"),
-                description=(b.get("Description") or "").strip(),
-                url=f"https://haveibeenpwned.com/PwnedWebsites#{b.get('Name')}",
-                extra={"data_classes": b.get("DataClasses", [])},
+                description=(b.get("Description") or "").strip() or None,
+                url=f"https://haveibeenpwned.com/PwnedWebsites#{name}",
+                extra={"data_classes": list(b.get("DataClasses") or [])},
             )
         )
     return out
 
 
-# ── DDoSecrets ───────────────────────────────────────────────────────────────
-# DDoSecrets retired its MediaWiki in 2024-2025. The current catalogue lives at
-# /all_articles/recent and uses /article/<slug> URLs. Each article appears
-# twice in the HTML (once as a title link, once as a "Read more" link), so we
-# dedupe by href before matching the query.
-_DDOSECRETS_INDEX = "https://ddosecrets.org/all_articles/recent"
+def parse_ddosecrets_html(html: str, query: str) -> list[BreachHit]:
+    """Substring-match the DDoSecrets recent-articles page for ``query``.
 
-
-async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> list[BreachHit]:
-    """Substring-match the DDoSecrets release catalogue against ``query``.
-
-    Returns every article whose title contains ``query`` (case-insensitive).
-    This is best-suited to dataset names ("blueleaks", "epstein") rather than
-    individual emails — DDoSecrets indexes leaks, not their contents.
+    DDoSecrets' current site lists articles at ``/article/<slug>``. Each
+    article appears twice in the markup (title link + "Read more" link);
+    we dedupe by href and skip the "Read more" anchor.
     """
-    settings = get_settings()
-    try:
-        await async_polite_sleep(settings.request_delay)
-        resp = await client.get(
-            _DDOSECRETS_INDEX,
-            headers={"User-Agent": settings.user_agent},
-        )
-    except Exception as exc:  # noqa: BLE001
-        err_console.print(f"[yellow]ddosecrets request failed:[/] {exc}")
-        return []
-
-    if resp.status_code != 200:
-        err_console.print(f"[yellow]ddosecrets status[/] {resp.status_code}")
-        return []
-
     from bs4 import BeautifulSoup
 
-    soup = BeautifulSoup(resp.text, "lxml")
-    out: list[BreachHit] = []
-    seen_hrefs: set[str] = set()
-    q = query.lower().strip()
+    q = (query or "").lower().strip()
     if not q:
         return []
+
+    soup = BeautifulSoup(html, "lxml")
+    out: list[BreachHit] = []
+    seen_hrefs: set[str] = set()
 
     for a in soup.select("a[href^='/article/']"):
         href = a.get("href") or ""
         if href in seen_hrefs:
             continue
         seen_hrefs.add(href)
-
-        # The title-link's text is the article title; the "Read more" link is
-        # the literal string "Read more". Skip the latter; we already have the
-        # title from the first occurrence of this href.
         title = (a.get_text() or "").strip()
-        if title.lower() == "read more":
+        if not title or title.lower() == "read more":
             continue
-
         if q in title.lower():
             out.append(
                 BreachHit(
@@ -169,25 +129,134 @@ async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> list[Brea
     return out
 
 
+# ── Sources (network code — thin wrappers over the parsers) ──────────────────
+
+
+async def _lookup_hibp(query: str, client: httpx.AsyncClient) -> BreachResult:
+    """Query HIBP's `breachedaccount` endpoint for an email."""
+    settings = get_settings()
+    if not settings.hibp_api_key:
+        return BreachResult("hibp", "no_auth", message="HIBP_API_KEY not set")
+    if "@" not in query:
+        # HIBP's breachedaccount endpoint is email-only — be explicit about why.
+        return BreachResult("hibp", "empty", message="HIBP breach search requires an email address")
+
+    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{query}"
+    headers = {
+        "hibp-api-key": settings.hibp_api_key.get_secret_value(),
+        "User-Agent": settings.user_agent,
+    }
+    try:
+        await async_polite_sleep(settings.request_delay)
+        resp = await retrying_get(
+            client, url, headers=headers, params={"truncateResponse": "false"}
+        )
+    except Exception as exc:  # noqa: BLE001
+        return BreachResult("hibp", "error", message=f"{type(exc).__name__}: {exc}")
+
+    if resp.status_code == 404:
+        # HIBP uses 404 to signal "no breaches" — that's a clean empty result.
+        return BreachResult("hibp", "empty", message="no breaches found for this email")
+    if resp.status_code == 401:
+        return BreachResult("hibp", "no_auth", message="HIBP rejected the API key (401)")
+    if resp.status_code == 429:
+        return BreachResult(
+            "hibp",
+            "rate_limited",
+            message="HIBP rate limit hit after retries — wait and try again",
+        )
+    if resp.status_code != 200:
+        return BreachResult(
+            "hibp",
+            "error",
+            message=f"HTTP {resp.status_code} from HIBP: {resp.text[:160]}",
+        )
+
+    hits = parse_hibp_response(resp.json())
+    if not hits:
+        return BreachResult("hibp", "empty", message="response contained no breaches")
+    return BreachResult("hibp", "ok", hits=hits, message=f"{len(hits)} breach(es) found")
+
+
+_DDOSECRETS_INDEX = "https://ddosecrets.org/all_articles/recent"
+
+
+async def _lookup_ddosecrets(query: str, client: httpx.AsyncClient) -> BreachResult:
+    """Substring-match the DDoSecrets recent-articles catalogue for ``query``."""
+    settings = get_settings()
+    try:
+        await async_polite_sleep(settings.request_delay)
+        resp = await retrying_get(
+            client, _DDOSECRETS_INDEX, headers={"User-Agent": settings.user_agent}
+        )
+    except Exception as exc:  # noqa: BLE001
+        return BreachResult("ddosecrets", "error", message=f"{type(exc).__name__}: {exc}")
+
+    if resp.status_code == 429:
+        return BreachResult(
+            "ddosecrets", "rate_limited", message="DDoSecrets rate limit after retries"
+        )
+    if resp.status_code != 200:
+        return BreachResult(
+            "ddosecrets", "error", message=f"HTTP {resp.status_code} from ddosecrets.org"
+        )
+
+    hits = parse_ddosecrets_html(resp.text, query)
+    if not hits:
+        return BreachResult("ddosecrets", "empty", message="no recent articles matched the query")
+    return BreachResult(
+        "ddosecrets",
+        "ok",
+        hits=hits,
+        message=f"{len(hits)} matching article(s)",
+    )
+
+
 SOURCES: dict[str, Any] = {
     "hibp": _lookup_hibp,
     "ddosecrets": _lookup_ddosecrets,
 }
 
 
-async def _run_all(query: str) -> list[BreachHit]:
+# ── Orchestration + rendering ────────────────────────────────────────────────
+
+
+async def _run_all(query: str) -> list[BreachResult]:
     settings = get_settings()
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(settings.http_timeout),
         headers={"User-Agent": settings.user_agent},
         follow_redirects=True,
     ) as client:
-        tasks = [src(query, client) for src in SOURCES.values()]
-        nested = await asyncio.gather(*tasks, return_exceptions=False)
-    return [hit for batch in nested for hit in batch]
+        return await asyncio.gather(*(src(query, client) for src in SOURCES.values()))
 
 
-def _render_table(query: str, hits: list[BreachHit]) -> Table:
+_STATUS_STYLE: dict[BreachStatus, str] = {
+    "ok": "[green]ok[/]",
+    "empty": "[yellow]empty[/]",
+    "rate_limited": "[red]rate-limited[/]",
+    "no_auth": "[red]no-auth[/]",
+    "error": "[red]error[/]",
+}
+
+
+def _render_status_panel(results: list[BreachResult]) -> Table:
+    table = Table(title="Source status", show_lines=False)
+    table.add_column("Source", style="cyan")
+    table.add_column("Status")
+    table.add_column("Detail", style="dim", overflow="fold")
+    table.add_column("Hits", justify="right")
+    for r in results:
+        table.add_row(
+            r.source,
+            _STATUS_STYLE.get(r.status, r.status),
+            r.message or "",
+            str(len(r.hits)),
+        )
+    return table
+
+
+def _render_hits_table(query: str, hits: list[BreachHit]) -> Table:
     table = Table(title=f"Breach hits for {query}", show_lines=True)
     table.add_column("Source", style="cyan")
     table.add_column("Name", style="bold")
@@ -198,6 +267,9 @@ def _render_table(query: str, hits: list[BreachHit]) -> Table:
         desc = (h.description or "").replace("\n", " ")
         table.add_row(h.source, h.name, h.date or "", desc[:160], h.url or "")
     return table
+
+
+# ── Command ──────────────────────────────────────────────────────────────────
 
 
 @app.callback(invoke_without_command=True)
@@ -219,21 +291,36 @@ def check(
     if ctx.invoked_subcommand is not None:
         return
 
-    hits = asyncio.run(_run_all(query))
+    results = asyncio.run(_run_all(query))
+    all_hits = [h for r in results for h in r.hits]
 
     if json_output:
         print_json(
             {
                 "query": query,
                 "checked_at": utcnow_iso(),
-                "total_hits": len(hits),
-                "results": [h.to_dict() for h in hits],
+                "source_status": [
+                    {
+                        "source": r.source,
+                        "status": r.status,
+                        "message": r.message,
+                        "hit_count": len(r.hits),
+                    }
+                    for r in results
+                ],
+                "total_hits": len(all_hits),
+                "results": [asdict(h) for h in all_hits],
             }
         )
         return
 
-    if not hits:
-        console.print(f"[green]No breach hits for[/] [bold]{query}[/].")
+    console.print(_render_status_panel(results))
+    if not all_hits:
+        console.print(f"\n[green]No breach hits for[/] [bold]{query}[/].")
+        # Surface auth / rate-limit issues on stderr so users notice.
+        for r in results:
+            if r.status in ("rate_limited", "no_auth"):
+                err_console.print(f"[red]{r.source}[/]: {r.message}")
         return
-    console.print(_render_table(query, hits))
-    console.print(f"\n[bold]Summary:[/] {len(hits)} hit(s) across {len(SOURCES)} source(s).")
+    console.print(_render_hits_table(query, all_hits))
+    console.print(f"\n[bold]Summary:[/] {len(all_hits)} hit(s) across {len(SOURCES)} source(s).")

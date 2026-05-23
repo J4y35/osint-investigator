@@ -33,6 +33,7 @@ import typer
 from rich.table import Table
 
 from osint_investigator.config import get_settings
+from osint_investigator.retry import retrying_get
 from osint_investigator.utils import async_polite_sleep, console, print_json, utcnow_iso
 
 app = typer.Typer(
@@ -170,7 +171,7 @@ async def _section_rdap(domain: str) -> SectionResult:
             follow_redirects=True,
         ) as client:
             await async_polite_sleep(settings.request_delay)
-            resp = await client.get(url)
+            resp = await retrying_get(client, url)
         if resp.status_code == 404:
             return SectionResult("rdap", "empty", message="domain not found in RDAP")
         if resp.status_code != 200:
@@ -250,12 +251,12 @@ async def _section_subdomains(domain: str) -> SectionResult:
             follow_redirects=True,
         ) as client:
             await async_polite_sleep(settings.request_delay)
-            resp = await client.get(url, params=params)
+            resp = await retrying_get(client, url, params=params)
         if resp.status_code != 200:
             return SectionResult(
                 "subdomains",
                 "error",
-                message=f"HTTP {resp.status_code} from crt.sh",
+                message=f"HTTP {resp.status_code} from crt.sh (retries exhausted)",
             )
         # crt.sh occasionally returns an empty body for "no results" rather
         # than `[]`; treat both the same way.
