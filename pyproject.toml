@@ -61,6 +61,9 @@ Repository = "https://github.com/J4y35/osint-investigator"
 # ---------- Hatch ----------
 [tool.hatch.build.targets.wheel]
 packages = ["src/osint_investigator"]
+# `src/osint_investigator/data/data.json` is picked up automatically because
+# it sits inside the package source tree — keep it there so it ships in the
+# wheel and is reachable via `importlib.resources.files("osint_investigator.data")`.
 
 # ---------- Ruff ----------
 [tool.ruff]

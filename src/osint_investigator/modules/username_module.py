@@ -1,15 +1,24 @@
 """``username`` subcommand — check whether a handle is taken on common sites.
 
-This is a deliberately small skeleton; production setups should switch to a
-maintained list (e.g. Sherlock's ``data.json``) once you've validated the
-core CLI surface. The pattern below is intentionally easy to extend.
+Probes are loaded from the bundled Sherlock catalogue (see
+:mod:`osint_investigator.modules.sherlock_sites`). The catalogue ships with
+the package, so the command works offline against ~470 sites.
+
+Probe modes follow Sherlock's documented schema:
+
+- ``status_code``: a 200 response means the profile exists; non-200 (or any
+  status listed in ``errorCode``) means it doesn't.
+- ``message``: the response body is searched for one or more "not found"
+  marker strings. If any marker appears, the profile doesn't exist.
+- ``response_url``: redirects are followed; if the final URL matches
+  ``errorUrl``, the profile doesn't exist.
 """
 
 from __future__ import annotations
 
 import asyncio
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Annotated
 
 import httpx
@@ -17,9 +26,15 @@ import typer
 from rich.table import Table
 
 from osint_investigator.config import get_settings
+from osint_investigator.modules.sherlock_sites import (
+    SiteProbe,
+    load_all_sites,
+    select_sites,
+)
 from osint_investigator.utils import (
     async_polite_sleep,
     console,
+    err_console,
     print_json,
     utcnow_iso,
 )
@@ -31,44 +46,8 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
-# Username syntactic validation (most sites enforce a similar charset).
+# Generous syntactic validation — individual sites' regexCheck still applies.
 _USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{2,40}$")
-
-
-@dataclass(slots=True)
-class SiteProbe:
-    """A minimal probe descriptor.
-
-    ``existence`` is a string that, if present in the response body, means the
-    username exists; ``absent_marker`` is the inverse. Probes that use HTTP
-    status codes alone leave both as ``None``.
-    """
-
-    name: str
-    url_template: str  # `{}` placeholder for the username
-    status_taken: tuple[int, ...] = (200,)
-    status_free: tuple[int, ...] = (404,)
-    absent_marker: str | None = None  # if substring is in body -> NOT taken
-
-
-# Starter list. Add sites by appending here.
-PROBES: list[SiteProbe] = [
-    SiteProbe("GitHub", "https://github.com/{}", (200,), (404,)),
-    SiteProbe("GitLab", "https://gitlab.com/{}", (200,), (404,)),
-    SiteProbe("Reddit", "https://www.reddit.com/user/{}", (200,), (404,)),
-    SiteProbe("Twitter", "https://twitter.com/{}", (200,), (404,)),
-    SiteProbe("Instagram", "https://www.instagram.com/{}/", (200,), (404,)),
-    SiteProbe("TikTok", "https://www.tiktok.com/@{}", (200,), (404,)),
-    SiteProbe("Medium", "https://medium.com/@{}", (200,), (404,)),
-    SiteProbe("Keybase", "https://keybase.io/{}", (200,), (404,)),
-    SiteProbe(
-        "HackerNews",
-        "https://news.ycombinator.com/user?id={}",
-        (200,),
-        (404,),
-        absent_marker="No such user.",
-    ),
-]
 
 
 @dataclass(slots=True)
@@ -80,39 +59,90 @@ class ProbeResult:
     error: str | None = None
 
 
-async def _probe(client: httpx.AsyncClient, p: SiteProbe, username: str) -> ProbeResult:
-    """Run a single probe with retries handled by httpx defaults."""
-    url = p.url_template.format(username)
-    settings = get_settings()
-    try:
-        await async_polite_sleep(settings.request_delay)
-        resp = await client.get(url, follow_redirects=True)
-        body = resp.text if p.absent_marker else ""
-        if p.absent_marker and p.absent_marker in body:
-            exists: bool | None = False
-        elif resp.status_code in p.status_taken:
-            exists = True
-        elif resp.status_code in p.status_free:
-            exists = False
-        else:
-            exists = None  # ambiguous
-        return ProbeResult(p.name, url, exists, resp.status_code)
-    except Exception as exc:  # noqa: BLE001
-        return ProbeResult(p.name, url, None, None, error=f"{type(exc).__name__}: {exc}")
+def _classify(probe: SiteProbe, resp: httpx.Response) -> bool | None:
+    """Map an HTTP response to ``exists`` per the probe's error mode.
+
+    Returns ``True`` (exists), ``False`` (does not exist), or ``None``
+    (ambiguous — e.g. 5xx server error, unexpected redirect).
+    """
+    status = resp.status_code
+    if probe.error_type == "status_code":
+        # Sites with an explicit `errorCode` use *that* code as the negative
+        # signal: matching the code means "not found", anything else means
+        # "found". This is how Sherlock disambiguates sites that return 200
+        # for both states but a distinct code (e.g. 410) for missing users.
+        if probe.error_status_codes:
+            if status in probe.error_status_codes:
+                return False
+            if 200 <= status < 400:
+                return True
+            return None
+        # Default semantics: 200 → exists, 4xx → free, 5xx → ambiguous.
+        if status == 200:
+            return True
+        if 400 <= status < 500:
+            return False
+        return None
+    if probe.error_type == "message":
+        if any(msg in resp.text for msg in probe.error_messages):
+            return False
+        if status == 200:
+            return True
+        # Non-200 with no marker hit is ambiguous — don't claim "free".
+        return None
+    if probe.error_type == "response_url":
+        # Sherlock semantics: the redirect-after-not-found URL is matched
+        # *exactly* against the final URL (modulo a trailing slash, which is
+        # the only inconsistency seen in the wild). Substring/prefix matching
+        # is too aggressive — many sites redirect to a path *under* the home
+        # URL when the profile exists.
+        target = (probe.error_url or "").rstrip("/")
+        final = str(resp.url).rstrip("/")
+        return not (target and final == target)
+    return None
 
 
-async def _run(username: str) -> list[ProbeResult]:
+async def _probe(
+    client: httpx.AsyncClient,
+    semaphore: asyncio.Semaphore,
+    p: SiteProbe,
+    username: str,
+) -> ProbeResult:
+    """Run a single probe under the global concurrency cap."""
     settings = get_settings()
+    profile_url = p.profile_url(username)
+    probe_url = p.probe_url(username)
+
+    # Honour the site's own regex hint when present — saves an HTTP call and
+    # avoids false-positive "free" results for sites that would reject the
+    # name as malformed.
+    if p.regex_check is not None and not p.regex_check.match(username):
+        return ProbeResult(p.name, profile_url, False, None, error="regexCheck mismatch")
+
+    async with semaphore:
+        try:
+            await async_polite_sleep(settings.request_delay)
+            resp = await client.get(probe_url, headers=p.headers or None, follow_redirects=True)
+            return ProbeResult(p.name, profile_url, _classify(p, resp), resp.status_code)
+        except Exception as exc:  # noqa: BLE001
+            return ProbeResult(
+                p.name, profile_url, None, None, error=f"{type(exc).__name__}: {exc}"
+            )
+
+
+async def _run(username: str, probes: list[SiteProbe], concurrency: int) -> list[ProbeResult]:
+    settings = get_settings()
+    semaphore = asyncio.Semaphore(max(1, concurrency))
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(settings.http_timeout),
         headers={"User-Agent": settings.user_agent},
         http2=False,
     ) as client:
-        return await asyncio.gather(*(_probe(client, p, username) for p in PROBES))
+        return await asyncio.gather(*(_probe(client, semaphore, p, username) for p in probes))
 
 
 def _render_table(username: str, results: list[ProbeResult]) -> Table:
-    table = Table(title=f"Username '{username}' across {len(PROBES)} sites", show_lines=False)
+    table = Table(title=f"Username '{username}' across {len(results)} sites", show_lines=False)
     table.add_column("Site", style="cyan", no_wrap=True)
     table.add_column("Status", justify="center")
     table.add_column("HTTP", justify="right", style="dim")
@@ -135,15 +165,86 @@ def check(
     json_output: Annotated[
         bool, typer.Option("--json", help="Emit JSON instead of a table.")
     ] = False,
+    all_sites: Annotated[
+        bool,
+        typer.Option(
+            "--all",
+            help="Check every site in the bundled Sherlock catalogue (~470).",
+        ),
+    ] = False,
+    site: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--site",
+            "-s",
+            help=(
+                "Restrict to sites whose name contains this substring (case-insensitive). "
+                "Repeat to allow multiple."
+            ),
+        ),
+    ] = None,
+    top: Annotated[
+        int | None,
+        typer.Option(
+            "--top",
+            help="Truncate to the first N sites (after filtering).",
+            min=1,
+        ),
+    ] = None,
+    include_nsfw: Annotated[
+        bool,
+        typer.Option("--include-nsfw", help="Include sites Sherlock marks NSFW."),
+    ] = False,
+    concurrency: Annotated[
+        int,
+        typer.Option(
+            "--concurrency",
+            "-c",
+            help="Max simultaneous in-flight requests.",
+            min=1,
+            max=200,
+        ),
+    ] = 25,
+    list_sites: Annotated[
+        bool,
+        typer.Option(
+            "--list-sites",
+            help="Print the sites that would be checked and exit (no requests sent).",
+        ),
+    ] = False,
 ) -> None:
-    """Check a username across a curated list of platforms."""
+    """Check a username across the bundled Sherlock catalogue."""
     if ctx.invoked_subcommand is not None:
         return
 
     if not _USERNAME_RE.match(username):
         raise typer.BadParameter(f"Invalid username: {username!r}", param_hint="--username")
 
-    results = asyncio.run(_run(username))
+    probes = select_sites(
+        all_sites=all_sites,
+        site_filters=tuple(site or ()),
+        top=top,
+        include_nsfw=include_nsfw,
+    )
+
+    if not probes:
+        err_console.print(
+            "[yellow]No sites matched your filters.[/] "
+            f"Catalogue contains {len(load_all_sites())} supportable sites."
+        )
+        raise typer.Exit(1)
+
+    if list_sites:
+        if json_output:
+            print_json({"count": len(probes), "sites": [p.name for p in probes]})
+        else:
+            console.print(f"[bold]{len(probes)} site(s) would be checked:[/]")
+            for p in probes:
+                tag = " [red](NSFW)[/]" if p.nsfw else ""
+                console.print(f"  • {p.name}{tag}  [dim]{p.url_template}[/]")
+        return
+
+    results = asyncio.run(_run(username, probes, concurrency))
 
     if json_output:
         print_json(
@@ -152,11 +253,19 @@ def check(
                 "checked_at": utcnow_iso(),
                 "total": len(results),
                 "taken": sum(1 for r in results if r.exists is True),
-                "results": [r.__dict__ for r in results],
+                "concurrency": concurrency,
+                # asdict() is needed because ProbeResult uses `slots=True`,
+                # which means it has no `__dict__`.
+                "results": [asdict(r) for r in results],
             }
         )
         return
 
     console.print(_render_table(username, results))
     taken = sum(1 for r in results if r.exists is True)
-    console.print(f"\n[bold]Summary:[/] [green]{taken}[/] taken / {len(results)} checked.")
+    free = sum(1 for r in results if r.exists is False)
+    ambiguous = sum(1 for r in results if r.exists is None)
+    console.print(
+        f"\n[bold]Summary:[/] [green]{taken} taken[/] / "
+        f"[red]{free} free[/] / [yellow]{ambiguous} unknown[/] of {len(results)} checked."
+    )
