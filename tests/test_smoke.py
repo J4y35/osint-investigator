@@ -17,8 +17,14 @@ def test_cli_help_loads() -> None:
     """`osint-investigator --help` should exit 0 and mention every subcommand."""
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0, result.stdout
-    for sub in ("email", "person", "username", "breach"):
+    for sub in ("email", "person", "username", "breach", "domain"):
         assert sub in result.stdout
+
+
+def test_domain_rejects_invalid_input() -> None:
+    """The domain command should reject obviously-malformed names."""
+    result = runner.invoke(app, ["domain", "--domain", "not a domain"])
+    assert result.exit_code != 0
 
 
 def test_version_flag() -> None:

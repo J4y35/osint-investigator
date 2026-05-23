@@ -48,6 +48,10 @@ The author provides this software "as is" and disclaims liability for misuse. Se
 - `username` — Check a handle across ~460 sites (Sherlock catalogue bundled into the
   wheel). Filtering via `--site`, `--top`, `--include-nsfw`; concurrency capped via
   `--concurrency`; full catalogue with `--all`.
+- `domain` — Investigate a domain across three sections: **RDAP** (via `rdap.org`)
+  for registrar/dates/status/nameservers, **DNS** (A/AAAA/MX/NS/TXT/CAA via
+  `dnspython`), and **subdomain enumeration** from Certificate Transparency logs
+  (via `crt.sh`). Section-selectable with `--section`.
 - `breach` — Lookup against Have I Been Pwned + DDoSecrets release index.
 - `--json` flag on every command for clean piping into `jq`, files, or other tooling.
 - Polite scraping by default (configurable delay, identifiable User-Agent).
@@ -72,6 +76,7 @@ osint-investigator/
 │       ├── person_module.py    # CourtListener + Playwright (Cloudflare-aware)
 │       ├── username_module.py  # Sherlock-backed handle probe
 │       ├── sherlock_sites.py   # Sherlock data.json loader + site selection
+│       ├── domain_module.py    # RDAP + DNS + crt.sh
 │       └── breach_module.py    # HIBP + DDoSecrets
 └── tests/                  # pytest suite (offline; fixtures under tests/fixtures/)
 ```

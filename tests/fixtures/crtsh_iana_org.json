@@ -1,0 +1,62 @@
+[
+  {
+    "issuer_ca_id": 295816,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R12",
+    "common_name": "handbook.int.iana.org",
+    "name_value": "handbook.int.iana.org",
+    "id": 25310731857,
+    "entry_timestamp": "2026-04-02T09:37:11.855",
+    "not_before": "2026-04-02T08:38:41",
+    "not_after": "2026-07-01T08:38:40",
+    "serial_number": "06840d9b8afa60274edf3536f2f8e880ad15",
+    "result_count": 2
+  },
+  {
+    "issuer_ca_id": 295816,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R12",
+    "common_name": "handbook.int.iana.org",
+    "name_value": "handbook.int.iana.org",
+    "id": 25307617847,
+    "entry_timestamp": "2026-04-02T09:37:11.529",
+    "not_before": "2026-04-02T08:38:41",
+    "not_after": "2026-07-01T08:38:40",
+    "serial_number": "06840d9b8afa60274edf3536f2f8e880ad15",
+    "result_count": 2
+  },
+  {
+    "issuer_ca_id": 286236,
+    "issuer_name": "C=US, O=Google Trust Services, CN=WE1",
+    "common_name": "data.iana.org",
+    "name_value": "data.iana.org",
+    "id": 25384865909,
+    "entry_timestamp": "2026-04-01T13:56:05.148",
+    "not_before": "2026-03-31T03:46:02",
+    "not_after": "2026-06-29T04:46:00",
+    "serial_number": "2c0c50d44742e0711364b8b0d4f42740",
+    "result_count": 2
+  },
+  {
+    "issuer_ca_id": 286236,
+    "issuer_name": "C=US, O=Google Trust Services, CN=WE1",
+    "common_name": "data.iana.org",
+    "name_value": "data.iana.org",
+    "id": 25419120065,
+    "entry_timestamp": "2026-03-31T04:46:03.245",
+    "not_before": "2026-03-31T03:46:02",
+    "not_after": "2026-06-29T04:46:00",
+    "serial_number": "2c0c50d44742e0711364b8b0d4f42740",
+    "result_count": 2
+  },
+  {
+    "issuer_ca_id": 286242,
+    "issuer_name": "C=US, O=Google Trust Services, CN=WR1",
+    "common_name": "data.iana.org",
+    "name_value": "data.iana.org",
+    "id": 25418157556,
+    "entry_timestamp": "2026-03-31T04:45:55.226",
+    "not_before": "2026-03-31T03:45:54",
+    "not_after": "2026-06-29T04:44:45",
+    "serial_number": "00d69b033a134e9e2f13d4757fb5d18206",
+    "result_count": 2
+  }
+]

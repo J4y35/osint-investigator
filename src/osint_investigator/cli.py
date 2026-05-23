@@ -18,6 +18,7 @@ from rich.text import Text
 from osint_investigator import __version__
 from osint_investigator.modules import (
     breach_module,
+    domain_module,
     email_module,
     person_module,
     username_module,
@@ -43,6 +44,7 @@ app.add_typer(email_module.app, name="email", help="Investigate an email address
 app.add_typer(person_module.app, name="person", help="Investigate a person (name + locale).")
 app.add_typer(username_module.app, name="username", help="Investigate a username across sites.")
 app.add_typer(breach_module.app, name="breach", help="Check breach / leak corpora.")
+app.add_typer(domain_module.app, name="domain", help="Investigate a domain (RDAP, DNS, CT logs).")
 
 
 def _version_callback(value: bool) -> None:
