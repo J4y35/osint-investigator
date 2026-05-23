@@ -9,12 +9,14 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
-from rich.json import JSON as RichJSON
+from rich.json import JSON as RichJSON  # noqa: N811 — alias avoids clash with stdlib `json`
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # A single shared Console instance avoids re-creating styles on every print.
 console = Console()

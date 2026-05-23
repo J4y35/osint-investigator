@@ -23,6 +23,7 @@ def test_cli_help_loads() -> None:
 
 def test_version_flag() -> None:
     from osint_investigator import __version__
+
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert __version__ in result.stdout

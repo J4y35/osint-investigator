@@ -94,7 +94,9 @@ async def _scrape_cyberbackgroundchecks(
         context = await browser.new_context(user_agent=settings.user_agent)
         page = await context.new_page()
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=int(settings.http_timeout * 1000))
+            await page.goto(
+                url, wait_until="domcontentloaded", timeout=int(settings.http_timeout * 1000)
+            )
             # Polite delay before parsing.
             await async_polite_sleep(settings.request_delay)
 
@@ -164,7 +166,9 @@ def search(
         str | None,
         typer.Option("--state", "-s", help="Two-letter US state code (optional)."),
     ] = None,
-    json_output: Annotated[bool, typer.Option("--json", help="Emit JSON instead of a table.")] = False,
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Emit JSON instead of a table.")
+    ] = False,
 ) -> None:
     """Search people-finder sites for a name (+ optional state)."""
     if ctx.invoked_subcommand is not None:

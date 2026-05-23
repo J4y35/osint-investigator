@@ -86,7 +86,9 @@ async def _lookup_hibp(query: str, client: httpx.AsyncClient) -> list[BreachHit]
     if resp.status_code == 404:
         return []  # No breaches — HIBP signals this with 404.
     if resp.status_code != 200:
-        err_console.print(f"[yellow]hibp unexpected status[/] {resp.status_code}: {resp.text[:200]}")
+        err_console.print(
+            f"[yellow]hibp unexpected status[/] {resp.status_code}: {resp.text[:200]}"
+        )
         return []
 
     out: list[BreachHit] = []
@@ -204,11 +206,14 @@ def check(
     query: Annotated[
         str,
         typer.Option(
-            "--query", "-q",
+            "--query",
+            "-q",
             help="Email or domain to search for in breach corpora.",
         ),
     ],
-    json_output: Annotated[bool, typer.Option("--json", help="Emit JSON instead of a table.")] = False,
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Emit JSON instead of a table.")
+    ] = False,
 ) -> None:
     """Check breach datasets (HIBP, DDoSecrets) for an email or domain."""
     if ctx.invoked_subcommand is not None:

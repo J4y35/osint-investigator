@@ -50,9 +50,7 @@ def _load_holehe_probes() -> list[Any]:
         import holehe.modules as holehe_modules
         from holehe.core import get_functions, import_submodules
     except ImportError as exc:  # pragma: no cover - depends on environment
-        raise typer.BadParameter(
-            "Holehe is not installed. Run `pip install holehe`."
-        ) from exc
+        raise typer.BadParameter("Holehe is not installed. Run `pip install holehe`.") from exc
 
     submodules = import_submodules(holehe_modules.__name__)
     return get_functions(submodules)
@@ -135,7 +133,8 @@ def check(
     email: Annotated[
         str,
         typer.Option(
-            "--email", "-e",
+            "--email",
+            "-e",
             help="Email address to investigate.",
             prompt=False,
             show_default=False,

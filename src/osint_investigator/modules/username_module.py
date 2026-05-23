@@ -20,7 +20,6 @@ from osint_investigator.config import get_settings
 from osint_investigator.utils import (
     async_polite_sleep,
     console,
-    err_console,
     print_json,
     utcnow_iso,
 )
@@ -46,7 +45,7 @@ class SiteProbe:
     """
 
     name: str
-    url_template: str   # `{}` placeholder for the username
+    url_template: str  # `{}` placeholder for the username
     status_taken: tuple[int, ...] = (200,)
     status_free: tuple[int, ...] = (404,)
     absent_marker: str | None = None  # if substring is in body -> NOT taken
@@ -54,16 +53,21 @@ class SiteProbe:
 
 # Starter list. Add sites by appending here.
 PROBES: list[SiteProbe] = [
-    SiteProbe("GitHub",   "https://github.com/{}",          (200,), (404,)),
-    SiteProbe("GitLab",   "https://gitlab.com/{}",          (200,), (404,)),
-    SiteProbe("Reddit",   "https://www.reddit.com/user/{}", (200,), (404,)),
-    SiteProbe("Twitter",  "https://twitter.com/{}",         (200,), (404,)),
-    SiteProbe("Instagram","https://www.instagram.com/{}/",  (200,), (404,)),
-    SiteProbe("TikTok",   "https://www.tiktok.com/@{}",     (200,), (404,)),
-    SiteProbe("Medium",   "https://medium.com/@{}",         (200,), (404,)),
-    SiteProbe("Keybase",  "https://keybase.io/{}",          (200,), (404,)),
-    SiteProbe("HackerNews","https://news.ycombinator.com/user?id={}", (200,), (404,),
-              absent_marker="No such user."),
+    SiteProbe("GitHub", "https://github.com/{}", (200,), (404,)),
+    SiteProbe("GitLab", "https://gitlab.com/{}", (200,), (404,)),
+    SiteProbe("Reddit", "https://www.reddit.com/user/{}", (200,), (404,)),
+    SiteProbe("Twitter", "https://twitter.com/{}", (200,), (404,)),
+    SiteProbe("Instagram", "https://www.instagram.com/{}/", (200,), (404,)),
+    SiteProbe("TikTok", "https://www.tiktok.com/@{}", (200,), (404,)),
+    SiteProbe("Medium", "https://medium.com/@{}", (200,), (404,)),
+    SiteProbe("Keybase", "https://keybase.io/{}", (200,), (404,)),
+    SiteProbe(
+        "HackerNews",
+        "https://news.ycombinator.com/user?id={}",
+        (200,),
+        (404,),
+        absent_marker="No such user.",
+    ),
 ]
 
 
@@ -128,7 +132,9 @@ def _render_table(username: str, results: list[ProbeResult]) -> Table:
 def check(
     ctx: typer.Context,
     username: Annotated[str, typer.Option("--username", "-u", help="Username/handle to look up.")],
-    json_output: Annotated[bool, typer.Option("--json", help="Emit JSON instead of a table.")] = False,
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Emit JSON instead of a table.")
+    ] = False,
 ) -> None:
     """Check a username across a curated list of platforms."""
     if ctx.invoked_subcommand is not None:
