@@ -1,0 +1,69 @@
+name: Release
+
+# Build wheel + sdist and publish to PyPI when a `v*` tag is pushed.
+#
+# Uses PyPI's OIDC trusted-publishing flow — no API tokens stored in repo
+# secrets. The publisher is configured one-time on PyPI under:
+#   PyPI project -> Manage -> Publishing -> Add a new pending publisher
+#   (or: account-level pending publisher before the project exists)
+# pointing at this repo + workflow + the `pypi` environment.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build
+
+      - name: Verify tag matches package version
+        # Belt-and-braces: refuse to publish if the tag and the version in
+        # pyproject.toml have drifted apart.
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "tag=$TAG_VERSION pkg=$PKG_VERSION"
+          test "$TAG_VERSION" = "$PKG_VERSION"
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # `pypi` is the environment the trusted publisher on PyPI is bound to.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/osint-investigator/
+    permissions:
+      # Required for OIDC trusted publishing.
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

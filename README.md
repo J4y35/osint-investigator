@@ -81,7 +81,25 @@ osint-investigator/
 └── tests/                  # pytest suite (offline; fixtures under tests/fixtures/)
 ```
 
-## Quickstart (macOS / Linux)
+## Install
+
+```bash
+# Stable release from PyPI
+pip install osint-investigator
+playwright install chromium  # only needed if you use the `person` cyberbackgroundchecks source
+
+# Or the latest from main
+pip install "git+https://github.com/J4y35/osint-investigator.git"
+```
+
+Then (optional) drop a `.env` next to your shell with an HIBP API key so the
+`breach` command can talk to Have I Been Pwned:
+
+```bash
+echo 'HIBP_API_KEY=your-key-here' > .env
+```
+
+## Development quickstart (macOS / Linux)
 
 ```bash
 # 1. Clone the project
@@ -103,7 +121,7 @@ cp .env.example .env
 
 # 5. Verify
 osint-investigator --help
-osint-investigator email --email test@example.com --json | head -40
+pytest -q
 ```
 
 ## Commands
