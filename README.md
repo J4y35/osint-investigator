@@ -56,6 +56,11 @@ The author provides this software "as is" and disclaims liability for misuse. Se
 - `password` — Check a password against HIBP's PwnedPasswords corpus via
   [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity). Your password
   never leaves your machine.
+- `profile` — **Aggregator.** Pass any subset of `--email`, `--username`,
+  `--first/--last`, `--domain` and every relevant module runs in parallel,
+  producing one Markdown report (also writeable to a file via `--report`),
+  one combined JSON document via `--json`, and/or one JSONL line in a
+  case file via `--output`.
 - `--json` flag on every command for clean piping into `jq`, files, or other tooling.
 - `--output FILE` flag on every command to append the JSON result as one
   JSONL record to a case file — accumulate an entire investigation across
@@ -84,7 +89,8 @@ osint-investigator/
 │       ├── sherlock_sites.py   # Sherlock data.json loader + site selection
 │       ├── domain_module.py    # RDAP + DNS + crt.sh
 │       ├── breach_module.py    # HIBP + DDoSecrets
-│       └── password_module.py  # HIBP PwnedPasswords k-anonymity check
+│       ├── password_module.py  # HIBP PwnedPasswords k-anonymity check
+│       └── profile_module.py   # Aggregator → unified Markdown / JSON report
 └── tests/                  # pytest suite (offline; fixtures under tests/fixtures/)
 ```
 

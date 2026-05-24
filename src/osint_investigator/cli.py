@@ -22,6 +22,7 @@ from osint_investigator.modules import (
     email_module,
     password_module,
     person_module,
+    profile_module,
     username_module,
 )
 from osint_investigator.utils import console, err_console
@@ -50,6 +51,11 @@ app.add_typer(
     password_module.app,
     name="password",
     help="Check a password against HIBP via k-anonymity (your password stays local).",
+)
+app.add_typer(
+    profile_module.app,
+    name="profile",
+    help="Aggregate every relevant lookup for a subject into one Markdown report.",
 )
 
 

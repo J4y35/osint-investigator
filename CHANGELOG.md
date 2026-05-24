@@ -5,6 +5,43 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-05-24
+
+### Added
+
+- **New `profile` aggregator command.** One invocation runs every relevant
+  module against a subject and emits a single consolidated Markdown report
+  (or JSON document, or appends one JSONL record to a case file).
+
+  ```
+  $ osint-investigator profile \
+      --email   alice@example.com  \
+      --username alice42           \
+      --first   Alice --last Smith \
+      --domain  example.com        \
+      --report  case.md            \
+      --output  case.jsonl
+  ```
+
+  Input flags map to upstream modules:
+  - `--email`               → `email` (Holehe) **+** `breach` (HIBP + DDoSecrets)
+  - `--username`            → `username` against the curated Sherlock default set
+  - `--first` + `--last`    → `person` (CourtListener federal court records)
+  - `--domain`              → `domain` (RDAP + DNS + crt.sh subdomains)
+
+  Sections that aren't requested don't run. Sections that error are
+  captured (not raised) so one upstream failure doesn't kill the report.
+  Markdown is also pretty-rendered to the terminal via Rich; pass
+  `--report path/to/report.md` to also write to disk, or `--json` for
+  the combined JSON document.
+
+### Tests
+
+142 total now (+12 since v0.3.0). New: full coverage of every
+`profile_module` Markdown helper, the `_serialise_sections` JSON
+adapter (handles dataclasses, exceptions, and plain dicts), and the
+top-level `_render_markdown` happy and exception paths.
+
 ## [0.3.0] — 2026-05-24
 
 ### Added
@@ -122,6 +159,7 @@ and the k-anonymity range parser; `test_smoke.py` covers `append_jsonl`
 - CI on Python 3.10/3.11/3.12 × ubuntu/macos.
 - MIT license, code of conduct, contributing guide, issue templates.
 
+[0.4.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.4.0
 [0.3.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.3.0
 [0.2.1]: https://github.com/J4y35/osint-investigator/releases/tag/v0.2.1
 [0.2.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.2.0
