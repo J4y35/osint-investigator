@@ -99,9 +99,10 @@ async def retrying_get(
         return exc.response
     except RetryError as exc:
         # Belt-and-suspenders: with `reraise=True` we shouldn't hit this,
-        # but if tenacity wraps the exception anyway, unwrap it.
-        if isinstance(exc.last_attempt.exception(), TransientHTTPError):
-            return exc.last_attempt.exception().response  # type: ignore[union-attr,return-value]
+        # but if tenacity wraps the exception anyway, unwrap it cleanly.
+        wrapped = exc.last_attempt.exception()
+        if isinstance(wrapped, TransientHTTPError):
+            return wrapped.response
         raise
     # If we somehow exited the loop without returning, last_response will be
     # set; if not, that's a real bug worth raising loudly.

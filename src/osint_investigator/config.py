@@ -67,4 +67,4 @@ def get_settings() -> Settings:
 
     Cached so that repeated lookups across modules don't re-parse `.env`.
     """
-    return Settings()  # type: ignore[call-arg]
+    return Settings()

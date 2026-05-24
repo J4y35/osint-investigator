@@ -297,7 +297,8 @@ async def _run_all(
     first: str, last: str, state: str | None, sources: list[str]
 ) -> list[SourceResult]:
     coros = [SOURCES[s](first, last, state) for s in sources]
-    return await asyncio.gather(*coros)
+    results: list[SourceResult] = await asyncio.gather(*coros)
+    return results
 
 
 # ── Output ───────────────────────────────────────────────────────────────────

@@ -124,7 +124,7 @@ def _build_probe(name: str, entry: dict[str, object]) -> SiteProbe | None:
         name=name,
         url_template=url,
         probe_url_template=probe_url,
-        error_type=error_type,  # type: ignore[arg-type]
+        error_type=error_type,
         error_messages=_coerce_error_messages(entry.get("errorMsg")),
         error_url=error_url_raw if isinstance(error_url_raw, str) else None,
         error_status_codes=_coerce_error_codes(entry.get("errorCode")),

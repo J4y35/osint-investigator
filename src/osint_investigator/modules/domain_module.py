@@ -38,6 +38,7 @@ from osint_investigator.utils import (
     async_polite_sleep,
     clickable,
     console,
+    dedupe_preserving_order,
     print_json,
     utcnow_iso,
 )
@@ -125,8 +126,7 @@ def parse_rdap_response(payload: dict[str, Any]) -> dict[str, Any]:
         if ldh:
             nameservers.append(str(ldh).lower())
     # Dedupe while preserving order — some RDAP responses repeat entries.
-    seen: set[str] = set()
-    out["nameservers"] = [n for n in nameservers if not (n in seen or seen.add(n))]
+    out["nameservers"] = dedupe_preserving_order(nameservers)
     return out
 
 
@@ -293,7 +293,8 @@ SECTIONS: dict[SectionName, Any] = {
 
 
 async def _run(domain: str, sections: list[SectionName]) -> list[SectionResult]:
-    return await asyncio.gather(*(SECTIONS[s](domain) for s in sections))
+    results: list[SectionResult] = await asyncio.gather(*(SECTIONS[s](domain) for s in sections))
+    return results
 
 
 _STATUS_STYLE: dict[SectionStatus, str] = {
@@ -382,9 +383,9 @@ def investigate(
                     f"Unknown section: {s!r}. Available: {', '.join(SECTIONS)}.",
                     param_hint="--section",
                 )
-            chosen.append(s)  # type: ignore[arg-type]
+            chosen.append(s)
     else:
-        chosen = list(SECTIONS.keys())  # type: ignore[arg-type]
+        chosen = list(SECTIONS.keys())
 
     results = asyncio.run(_run(domain_clean, chosen))
 

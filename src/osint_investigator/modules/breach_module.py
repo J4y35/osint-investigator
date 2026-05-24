@@ -112,8 +112,11 @@ def parse_ddosecrets_html(html: str, query: str) -> list[BreachHit]:
     seen_hrefs: set[str] = set()
 
     for a in soup.select("a[href^='/article/']"):
-        href = a.get("href") or ""
-        if href in seen_hrefs:
+        # `Tag.get("href")` is typed as `str | list[str] | None`; in practice
+        # it's always a string for these anchors, but normalise defensively.
+        href_raw = a.get("href")
+        href = href_raw if isinstance(href_raw, str) else ""
+        if not href or href in seen_hrefs:
             continue
         seen_hrefs.add(href)
         title = (a.get_text() or "").strip()
@@ -229,7 +232,10 @@ async def _run_all(query: str) -> list[BreachResult]:
         headers={"User-Agent": settings.user_agent},
         follow_redirects=True,
     ) as client:
-        return await asyncio.gather(*(src(query, client) for src in SOURCES.values()))
+        results: list[BreachResult] = await asyncio.gather(
+            *(src(query, client) for src in SOURCES.values())
+        )
+        return results
 
 
 _STATUS_STYLE: dict[BreachStatus, str] = {

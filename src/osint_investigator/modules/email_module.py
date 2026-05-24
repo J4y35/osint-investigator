@@ -53,7 +53,10 @@ def _load_holehe_probes() -> list[Any]:
         raise typer.BadParameter("Holehe is not installed. Run `pip install holehe`.") from exc
 
     submodules = import_submodules(holehe_modules.__name__)
-    return get_functions(submodules)
+    # Holehe doesn't ship type stubs, so the return type degrades to Any.
+    # Annotate locally so mypy --strict stays happy.
+    funcs: list[Any] = get_functions(submodules)
+    return funcs
 
 
 # ── Async runner ─────────────────────────────────────────────────────────────
