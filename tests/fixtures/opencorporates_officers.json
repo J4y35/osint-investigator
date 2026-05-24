@@ -1,0 +1,56 @@
+{
+  "api_version": "0.4",
+  "results": {
+    "total_count": 42,
+    "total_pages": 3,
+    "per_page": 20,
+    "page": 1,
+    "officers": [
+      {
+        "officer": {
+          "name": "Sotomayor, Sonia Maria",
+          "position": "director",
+          "start_date": "2014-03-12",
+          "end_date": null,
+          "occupation": "Justice",
+          "current_status": "active",
+          "opencorporates_url": "https://opencorporates.com/officers/1234567",
+          "company": {
+            "name": "Example Holdings LLC",
+            "jurisdiction_code": "us_ny",
+            "company_number": "5555555",
+            "opencorporates_url": "https://opencorporates.com/companies/us_ny/5555555",
+            "incorporation_date": "2010-01-01"
+          }
+        }
+      },
+      {
+        "officer": {
+          "name": "Sotomayor, Sonia M",
+          "position": "secretary",
+          "start_date": "2008-06-01",
+          "end_date": "2012-01-31",
+          "opencorporates_url": "https://opencorporates.com/officers/2345678",
+          "company": {
+            "name": "Civic Foundation Inc",
+            "jurisdiction_code": "us_dc",
+            "company_number": "9999999",
+            "opencorporates_url": "https://opencorporates.com/companies/us_dc/9999999"
+          }
+        }
+      },
+      {
+        "officer": {
+          "name": "Sotomayor, S",
+          "position": "trustee",
+          "opencorporates_url": "https://opencorporates.com/officers/3456789",
+          "company": {
+            "name": "Education Trust",
+            "jurisdiction_code": "us_ca",
+            "opencorporates_url": "https://opencorporates.com/companies/us_ca/1111111"
+          }
+        }
+      }
+    ]
+  }
+}

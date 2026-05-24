@@ -91,7 +91,10 @@ async def _run_profile(
         tasks["username"] = username_module._run(username, probes, concurrency)
 
     if first and last:
-        tasks["person"] = person_module._run_all(first, last, state, ["courtlistener"])
+        # Profile uses the default no-auth person sources (courtlistener +
+        # EDGAR). Users who want the keyed sources (opencorporates, FEC,
+        # OFAC) should call `person` directly with --source.
+        tasks["person"] = person_module._run_all(first, last, state, ["courtlistener", "edgar"])
 
     if domain:
         tasks["domain"] = domain_module._run(domain, ["rdap", "dns", "subdomains"])

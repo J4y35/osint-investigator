@@ -5,6 +5,66 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-05-24
+
+### Added
+
+Four new public-records sources for the `person` command, each picked
+for "legitimate signal about a person from a public-records source that
+will not give you their address." Selectable via `--source`; the
+no-auth ones run by default.
+
+- **`edgar`** (no auth) — SEC EDGAR full-text search. Returns every
+  filing where the subject's name appears: officers and directors of
+  public companies, Form 4 insider trades, 13F filings, etc. Live-tested
+  against "Warren Buffett" → 100+ hits. Surfaces filing URL, form
+  type, file date, and CIK in `extra`.
+- **`opencorporates`** (key required: `OPENCORPORATES_API_KEY`) —
+  officer / director search across global company registries. Answers
+  "is this person on the board of a registered company anywhere in the
+  world." Surfaces company, position, jurisdiction, start/end dates.
+- **`fec`** (key required: `FEC_API_KEY` — free from api.data.gov) —
+  individual political contributions above the $200 federal disclosure
+  threshold. Surfaces amount, date, recipient committee, contributor's
+  self-reported employer and occupation, and the FEC docket URL.
+- **`ofac_csl`** (key required: `TRADE_GOV_API_KEY` — free from
+  api.trade.gov) — Trade.gov's consolidated screening list aggregating
+  OFAC SDN + BIS Entity List + State Department Debarred List. Any
+  hit here is *significant* for due-diligence work. Surfaces sanctions
+  program, citizenship, addresses, and the source list URL.
+
+The `profile` aggregator now runs `edgar` alongside `courtlistener` by
+default when `--first` / `--last` are passed.
+
+### Quality
+
+- Default `--source` for the `person` command is now
+  `["courtlistener", "edgar"]` — both no-auth, both high-signal. The
+  three keyed sources are opt-in.
+- EDGAR requests send a SEC-compliant plain User-Agent
+  (`osint-investigator-cli/<version>`) regardless of the global
+  `OSINT_USER_AGENT`. SEC's WAF blocks UAs containing parenthesized
+  URLs or `github.com` — patterns common to scrapers — which would
+  otherwise return HTTP 403.
+- New config fields: `FEC_API_KEY`, `TRADE_GOV_API_KEY`,
+  `OPENCORPORATES_API_KEY` (all optional `SecretStr`).
+
+### Tests
+
+154 total now (+12 since v0.4.0). New fixtures + parser tests for
+all four sources:
+
+- `tests/fixtures/edgar_sotomayor.json` — real EDGAR response (3 hits).
+- `tests/fixtures/opencorporates_officers.json` — hand-crafted matching
+  the documented v0.4 schema (3 officerships).
+- `tests/fixtures/fec_donor_search.json` — hand-crafted matching the
+  documented v1 schema (3 contributions).
+- `tests/fixtures/trade_gov_csl.json` — hand-crafted matching the
+  documented CSL schema (1 SDN individual + 1 Entity List entity).
+
+Each parser covered for happy path, missing-fields tolerance, and
+empty-results handling.
+
 ## [0.4.0] — 2026-05-24
 
 ### Added
@@ -159,6 +219,7 @@ and the k-anonymity range parser; `test_smoke.py` covers `append_jsonl`
 - CI on Python 3.10/3.11/3.12 × ubuntu/macos.
 - MIT license, code of conduct, contributing guide, issue templates.
 
+[0.5.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.5.0
 [0.4.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.4.0
 [0.3.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.3.0
 [0.2.1]: https://github.com/J4y35/osint-investigator/releases/tag/v0.2.1

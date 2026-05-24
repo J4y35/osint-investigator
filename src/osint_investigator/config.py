@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     hibp_api_key: SecretStr | None = Field(default=None, alias="HIBP_API_KEY")
     hunter_api_key: SecretStr | None = Field(default=None, alias="HUNTER_API_KEY")
     intelx_api_key: SecretStr | None = Field(default=None, alias="INTELX_API_KEY")
+    # FEC (api.open.fec.gov) — free, requires registration at api.data.gov.
+    fec_api_key: SecretStr | None = Field(default=None, alias="FEC_API_KEY")
+    # Trade.gov consolidated screening list (OFAC SDN + BIS Entity List +
+    # State Dept). Free key from api.trade.gov.
+    trade_gov_api_key: SecretStr | None = Field(default=None, alias="TRADE_GOV_API_KEY")
+    # OpenCorporates (api.opencorporates.com) — free tier requires a key
+    # since 2023. Register at https://opencorporates.com/api_accounts/new.
+    opencorporates_api_key: SecretStr | None = Field(default=None, alias="OPENCORPORATES_API_KEY")
 
     # ── Polite scraping defaults ─────────────────────────────────────────────
     user_agent: str = Field(

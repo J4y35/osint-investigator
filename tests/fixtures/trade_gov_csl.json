@@ -1,0 +1,40 @@
+{
+  "total": 2,
+  "sources_used": [
+    {"source": "Specially Designated Nationals (SDN) - Treasury Department"},
+    {"source": "Entity List (EL) - Bureau of Industry and Security"}
+  ],
+  "results": [
+    {
+      "name": "Example Sanctioned Person",
+      "alt_names": ["EXAMPLE, S."],
+      "type": "Individual",
+      "source": "Specially Designated Nationals (SDN) - Treasury Department",
+      "source_list_url": "https://www.treasury.gov/ofac/downloads/sdnlist.txt",
+      "programs": ["IRAN", "SDGT"],
+      "remarks": "DOB 01 Jan 1970; Citizen of Country X",
+      "citizenships": ["Country X"],
+      "dates_of_birth": ["1970-01-01"],
+      "addresses": [
+        {
+          "address": "123 Sanctions Lane",
+          "city": "Tehran",
+          "country": "Iran"
+        }
+      ],
+      "ids": [
+        {"type": "Passport", "number": "X1234567", "country": "Country X"}
+      ]
+    },
+    {
+      "name": "Example Restricted Entity Ltd",
+      "type": "Entity",
+      "source": "Entity List (EL) - Bureau of Industry and Security",
+      "source_list_url": "https://www.bis.doc.gov/index.php/policy-guidance/lists-of-parties-of-concern/entity-list",
+      "programs": ["EAR99 license required"],
+      "addresses": [
+        {"country": "Country Y"}
+      ]
+    }
+  ]
+}

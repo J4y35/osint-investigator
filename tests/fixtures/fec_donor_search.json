@@ -1,0 +1,50 @@
+{
+  "api_version": "1.0",
+  "pagination": {
+    "page": 1,
+    "pages": 5,
+    "per_page": 20,
+    "count": 87
+  },
+  "results": [
+    {
+      "contributor_name": "SMITH, JOHN A",
+      "contributor_city": "AUSTIN",
+      "contributor_state": "TX",
+      "contributor_zip": "78701",
+      "contributor_employer": "ACME CORP",
+      "contributor_occupation": "ENGINEER",
+      "contribution_receipt_amount": 250.0,
+      "contribution_receipt_date": "2024-09-15",
+      "contributor_aggregate_ytd": 750.0,
+      "memo_text": null,
+      "committee": {
+        "name": "EXAMPLE FOR CONGRESS",
+        "committee_id": "C00000001"
+      },
+      "pdf_url": "https://docquery.fec.gov/cgi-bin/forms/C00000001/12345/"
+    },
+    {
+      "contributor_name": "SMITH, JOHN A",
+      "contributor_city": "AUSTIN",
+      "contributor_state": "TX",
+      "contributor_employer": "ACME CORP",
+      "contributor_occupation": "ENGINEER",
+      "contribution_receipt_amount": 500.0,
+      "contribution_receipt_date": "2024-06-20",
+      "committee": {
+        "name": "ANOTHER PAC",
+        "committee_id": "C00000002"
+      },
+      "pdf_url": "https://docquery.fec.gov/cgi-bin/forms/C00000002/67890/"
+    },
+    {
+      "contributor_name": "Smith, John",
+      "contributor_city": "Austin",
+      "contributor_state": "TX",
+      "contribution_receipt_amount": 1000.0,
+      "contribution_receipt_date": "2022-10-01",
+      "committee_name": "Senate Committee X"
+    }
+  ]
+}

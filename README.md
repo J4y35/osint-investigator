@@ -41,10 +41,20 @@ The author provides this software "as is" and disclaims liability for misuse. Se
 ## Features
 
 - `email` — Run ~120 Holehe probes against an email and print a Rich table or JSON.
-- `person` — Multi-source person lookup. Today: **CourtListener** (free federal court
-  records via the v4 REST API) and a Playwright scaffold for **cyberbackgroundchecks**
-  (the site is gated by Cloudflare Turnstile — the source reports `blocked` with a
-  clear message rather than silently returning zero hits).
+- `person` — Multi-source person lookup against public-records sources. Six
+  back-ends, selectable with repeatable `--source`:
+  - **`courtlistener`** (no auth) — federal court records via v4 REST API.
+  - **`edgar`** (no auth) — SEC EDGAR full-text search for filings mentioning
+    the subject. Officers, directors, insider trades, 13F holdings.
+  - **`opencorporates`** (key) — officer / director search across global
+    company registries.
+  - **`fec`** (key) — federal political contributions above $200.
+  - **`ofac_csl`** (key) — US Treasury / BIS / State Dept consolidated
+    sanctions screening list (OFAC SDN + Entity List + Debarred).
+  - **`cyberbackgroundchecks`** — Playwright scaffold, currently
+    Cloudflare-blocked; reports `blocked` honestly rather than silently
+    returning nothing.
+  Defaults to the two no-auth sources (`courtlistener` + `edgar`).
 - `username` — Check a handle across ~460 sites (Sherlock catalogue bundled into the
   wheel). Filtering via `--site`, `--top`, `--include-nsfw`; concurrency capped via
   `--concurrency`; full catalogue with `--all`.
