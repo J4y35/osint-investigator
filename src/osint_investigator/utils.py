@@ -64,3 +64,23 @@ def dedupe_preserving_order(items: Iterable[str]) -> list[str]:
             seen.add(item)
             out.append(item)
     return out
+
+
+def clickable(url: str | None, display: str | None = None) -> str:
+    """Wrap ``url`` in Rich link markup so it renders as a clickable hyperlink.
+
+    Terminals that support OSC-8 escape sequences (iTerm2, recent macOS
+    Terminal.app, Windows Terminal, VS Code's integrated terminal, Kitty,
+    Alacritty, WezTerm, etc.) render the result as a hyperlink — ⌘-click
+    (or Ctrl-click on Linux/Windows) opens it in the default browser.
+
+    When the output is piped or redirected, Rich strips terminal control
+    sequences automatically, so the result degrades to plain text — no
+    ANSI gibberish in your log files.
+
+    Returns ``display`` (or empty string) when ``url`` is falsy, so callers
+    can pass through optional URLs without a guard.
+    """
+    if not url:
+        return display or ""
+    return f"[link={url}]{display or url}[/link]"

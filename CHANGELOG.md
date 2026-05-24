@@ -5,6 +5,21 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-05-23
+
+### Added
+
+- **Clickable hyperlinks in CLI tables.** URLs in `username`, `person`,
+  `breach`, and `domain` outputs are now wrapped in Rich's link markup,
+  which emits OSC-8 escape sequences. Terminals that support them
+  (iTerm2, recent macOS Terminal.app, Windows Terminal, VS Code's
+  terminal, Kitty, Alacritty, WezTerm, etc.) let you ⌘-click (or
+  Ctrl-click) the URL to open it in your default browser instead of
+  copy-pasting. Subdomain hostnames from CT logs get an `https://`
+  prefix so they're clickable too. JSON output is unchanged (plain URL
+  strings); piped output also stays plain because Rich strips control
+  sequences automatically when stdout isn't a TTY.
+
 ## [0.2.0] — 2026-05-23
 
 ### Added
@@ -64,5 +79,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - CI on Python 3.10/3.11/3.12 × ubuntu/macos.
 - MIT license, code of conduct, contributing guide, issue templates.
 
+[0.2.1]: https://github.com/J4y35/osint-investigator/releases/tag/v0.2.1
 [0.2.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.2.0
 [0.1.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.1.0

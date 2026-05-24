@@ -34,7 +34,13 @@ from rich.table import Table
 
 from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
-from osint_investigator.utils import async_polite_sleep, console, print_json, utcnow_iso
+from osint_investigator.utils import (
+    async_polite_sleep,
+    clickable,
+    console,
+    print_json,
+    utcnow_iso,
+)
 
 app = typer.Typer(
     name="domain",
@@ -329,8 +335,10 @@ def _render_subdomains(payload: dict[str, Any]) -> Table:
         show_lines=False,
     )
     table.add_column("Subdomain", style="cyan", overflow="fold")
+    # CT-log entries are hostnames; prefix https:// so the terminal can open
+    # them as URLs. The displayed text stays the plain hostname.
     for s in subs:
-        table.add_row(s)
+        table.add_row(clickable(f"https://{s}", display=s))
     return table
 
 

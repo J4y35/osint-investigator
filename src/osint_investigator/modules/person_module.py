@@ -33,6 +33,7 @@ from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
     async_polite_sleep,
+    clickable,
     console,
     err_console,
     print_json,
@@ -344,7 +345,7 @@ def _render_hits_table(query: str, hits: list[PersonHit]) -> Table:
             h.name,
             h.location or "",
             ", ".join(detail_parts),
-            h.url or "",
+            clickable(h.url),
         )
     return table
 

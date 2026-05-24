@@ -29,6 +29,7 @@ from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
     async_polite_sleep,
+    clickable,
     console,
     err_console,
     print_json,
@@ -265,7 +266,7 @@ def _render_hits_table(query: str, hits: list[BreachHit]) -> Table:
     table.add_column("URL", overflow="fold", style="dim")
     for h in hits:
         desc = (h.description or "").replace("\n", " ")
-        table.add_row(h.source, h.name, h.date or "", desc[:160], h.url or "")
+        table.add_row(h.source, h.name, h.date or "", desc[:160], clickable(h.url))
     return table
 
 

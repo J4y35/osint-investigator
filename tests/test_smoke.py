@@ -52,6 +52,27 @@ def test_username_list_sites_no_network() -> None:
     assert "GitHub" in result.stdout
 
 
+def test_clickable_wraps_url_in_rich_link_markup() -> None:
+    from osint_investigator.utils import clickable
+
+    assert (
+        clickable("https://example.com/x")
+        == "[link=https://example.com/x]https://example.com/x[/link]"
+    )
+    assert (
+        clickable("https://example.com/x", display="example")
+        == "[link=https://example.com/x]example[/link]"
+    )
+
+
+def test_clickable_passes_through_when_url_missing() -> None:
+    from osint_investigator.utils import clickable
+
+    assert clickable(None) == ""
+    assert clickable("") == ""
+    assert clickable(None, display="fallback") == "fallback"
+
+
 def test_username_list_sites_json_serialisable() -> None:
     """Regression: `--list-sites --json` must emit valid JSON.
 

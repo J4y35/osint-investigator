@@ -33,6 +33,7 @@ from osint_investigator.modules.sherlock_sites import (
 )
 from osint_investigator.utils import (
     async_polite_sleep,
+    clickable,
     console,
     err_console,
     print_json,
@@ -154,7 +155,7 @@ def _render_table(username: str, results: list[ProbeResult]) -> Table:
             tag = "[red]free[/]"
         else:
             tag = "[yellow]?[/]"
-        table.add_row(r.site, tag, str(r.status or "-"), r.url)
+        table.add_row(r.site, tag, str(r.status or "-"), clickable(r.url))
     return table
 
 
