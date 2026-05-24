@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Annotated
 
 import httpx
@@ -32,6 +33,7 @@ from osint_investigator.modules.sherlock_sites import (
     select_sites,
 )
 from osint_investigator.utils import (
+    append_jsonl,
     async_polite_sleep,
     clickable,
     console,
@@ -213,6 +215,14 @@ def check(
             help="Print the sites that would be checked and exit (no requests sent).",
         ),
     ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Append the JSON result as one JSONL record to this case file.",
+        ),
+    ] = None,
 ) -> None:
     """Check a username across the bundled Sherlock catalogue."""
     if ctx.invoked_subcommand is not None:
@@ -236,8 +246,11 @@ def check(
         raise typer.Exit(1)
 
     if list_sites:
+        list_payload = {"count": len(probes), "sites": [p.name for p in probes]}
+        if output is not None:
+            append_jsonl(output, "username:list", list_payload)
         if json_output:
-            print_json({"count": len(probes), "sites": [p.name for p in probes]})
+            print_json(list_payload)
         else:
             console.print(f"[bold]{len(probes)} site(s) would be checked:[/]")
             for p in probes:
@@ -247,19 +260,20 @@ def check(
 
     results = asyncio.run(_run(username, probes, concurrency))
 
+    payload = {
+        "query": username,
+        "checked_at": utcnow_iso(),
+        "total": len(results),
+        "taken": sum(1 for r in results if r.exists is True),
+        "concurrency": concurrency,
+        # asdict() is needed because ProbeResult uses `slots=True`,
+        # which means it has no `__dict__`.
+        "results": [asdict(r) for r in results],
+    }
+    if output is not None:
+        append_jsonl(output, "username", payload)
     if json_output:
-        print_json(
-            {
-                "query": username,
-                "checked_at": utcnow_iso(),
-                "total": len(results),
-                "taken": sum(1 for r in results if r.exists is True),
-                "concurrency": concurrency,
-                # asdict() is needed because ProbeResult uses `slots=True`,
-                # which means it has no `__dict__`.
-                "results": [asdict(r) for r in results],
-            }
-        )
+        print_json(payload)
         return
 
     console.print(_render_table(username, results))

@@ -20,6 +20,7 @@ from osint_investigator.modules import (
     breach_module,
     domain_module,
     email_module,
+    password_module,
     person_module,
     username_module,
 )
@@ -45,6 +46,11 @@ app.add_typer(person_module.app, name="person", help="Investigate a person (name
 app.add_typer(username_module.app, name="username", help="Investigate a username across sites.")
 app.add_typer(breach_module.app, name="breach", help="Check breach / leak corpora.")
 app.add_typer(domain_module.app, name="domain", help="Investigate a domain (RDAP, DNS, CT logs).")
+app.add_typer(
+    password_module.app,
+    name="password",
+    help="Check a password against HIBP via k-anonymity (your password stays local).",
+)
 
 
 def _version_callback(value: bool) -> None:

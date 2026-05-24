@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Annotated, Any, Literal
 from urllib.parse import quote_plus
 
@@ -32,6 +33,7 @@ from rich.table import Table
 from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
+    append_jsonl,
     async_polite_sleep,
     clickable,
     console,
@@ -376,6 +378,14 @@ def search(
     json_output: Annotated[
         bool, typer.Option("--json", help="Emit JSON instead of tables.")
     ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Append the JSON result as one JSONL record to this case file.",
+        ),
+    ] = None,
 ) -> None:
     """Search public-record and people-finder sources for a name."""
     if ctx.invoked_subcommand is not None:
@@ -393,25 +403,26 @@ def search(
     results = asyncio.run(_run_all(first, last, state, chosen))
     all_hits = [h for r in results for h in r.hits]
 
-    if json_output:
-        print_json(
+    payload = {
+        "query": {"first": first, "last": last, "state": state},
+        "checked_at": utcnow_iso(),
+        "sources": chosen,
+        "source_status": [
             {
-                "query": {"first": first, "last": last, "state": state},
-                "checked_at": utcnow_iso(),
-                "sources": chosen,
-                "source_status": [
-                    {
-                        "source": r.source,
-                        "status": r.status,
-                        "message": r.message,
-                        "hit_count": len(r.hits),
-                    }
-                    for r in results
-                ],
-                "total_hits": len(all_hits),
-                "results": [asdict(h) for h in all_hits],
+                "source": r.source,
+                "status": r.status,
+                "message": r.message,
+                "hit_count": len(r.hits),
             }
-        )
+            for r in results
+        ],
+        "total_hits": len(all_hits),
+        "results": [asdict(h) for h in all_hits],
+    }
+    if output is not None:
+        append_jsonl(output, "person", payload)
+    if json_output:
+        print_json(payload)
         return
 
     console.print(_render_status_panel(results))

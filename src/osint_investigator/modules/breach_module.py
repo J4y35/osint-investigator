@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -28,6 +29,7 @@ from rich.table import Table
 from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
+    append_jsonl,
     async_polite_sleep,
     clickable,
     console,
@@ -293,6 +295,14 @@ def check(
     json_output: Annotated[
         bool, typer.Option("--json", help="Emit JSON instead of a table.")
     ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Append the JSON result as one JSONL record to this case file.",
+        ),
+    ] = None,
 ) -> None:
     """Check breach datasets (HIBP, DDoSecrets) for an email or domain."""
     if ctx.invoked_subcommand is not None:
@@ -301,24 +311,25 @@ def check(
     results = asyncio.run(_run_all(query))
     all_hits = [h for r in results for h in r.hits]
 
-    if json_output:
-        print_json(
+    payload = {
+        "query": query,
+        "checked_at": utcnow_iso(),
+        "source_status": [
             {
-                "query": query,
-                "checked_at": utcnow_iso(),
-                "source_status": [
-                    {
-                        "source": r.source,
-                        "status": r.status,
-                        "message": r.message,
-                        "hit_count": len(r.hits),
-                    }
-                    for r in results
-                ],
-                "total_hits": len(all_hits),
-                "results": [asdict(h) for h in all_hits],
+                "source": r.source,
+                "status": r.status,
+                "message": r.message,
+                "hit_count": len(r.hits),
             }
-        )
+            for r in results
+        ],
+        "total_hits": len(all_hits),
+        "results": [asdict(h) for h in all_hits],
+    }
+    if output is not None:
+        append_jsonl(output, "breach", payload)
+    if json_output:
+        print_json(payload)
         return
 
     console.print(_render_status_panel(results))

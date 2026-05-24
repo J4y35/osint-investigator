@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from pathlib import Path
 from typing import Annotated, Any
 
 import httpx
@@ -30,7 +31,13 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from osint_investigator.config import get_settings
-from osint_investigator.utils import console, err_console, print_json, utcnow_iso
+from osint_investigator.utils import (
+    append_jsonl,
+    console,
+    err_console,
+    print_json,
+    utcnow_iso,
+)
 
 app = typer.Typer(
     name="email",
@@ -155,6 +162,14 @@ def check(
         float | None,
         typer.Option("--timeout", help="Per-request HTTP timeout (seconds)."),
     ] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Append the JSON result as one JSONL record to this case file.",
+        ),
+    ] = None,
 ) -> None:
     """Check an email across every Holehe-supported site."""
     if ctx.invoked_subcommand is not None:
@@ -182,13 +197,15 @@ def check(
     if only_found:
         results = [r for r in results if r.get("exists") is True]
 
+    payload = {
+        "query": email,
+        "checked_at": utcnow_iso(),
+        **_summary(results),
+        "results": sorted(results, key=lambda r: r.get("name", "")),
+    }
+    if output is not None:
+        append_jsonl(output, "email", payload)
     if json_output:
-        payload = {
-            "query": email,
-            "checked_at": utcnow_iso(),
-            **_summary(results),
-            "results": sorted(results, key=lambda r: r.get("name", "")),
-        }
         print_json(payload)
         return
 

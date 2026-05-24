@@ -26,6 +26,7 @@ from __future__ import annotations
 import asyncio
 import re
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -35,6 +36,7 @@ from rich.table import Table
 from osint_investigator.config import get_settings
 from osint_investigator.retry import retrying_get
 from osint_investigator.utils import (
+    append_jsonl,
     async_polite_sleep,
     clickable,
     console,
@@ -366,6 +368,14 @@ def investigate(
     json_output: Annotated[
         bool, typer.Option("--json", help="Emit JSON instead of tables.")
     ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Append the JSON result as one JSONL record to this case file.",
+        ),
+    ] = None,
 ) -> None:
     """Investigate a domain across RDAP, DNS, and CT-log subdomain enumeration."""
     if ctx.invoked_subcommand is not None:
@@ -389,22 +399,23 @@ def investigate(
 
     results = asyncio.run(_run(domain_clean, chosen))
 
-    if json_output:
-        print_json(
+    payload = {
+        "query": {"domain": domain_clean},
+        "checked_at": utcnow_iso(),
+        "sections": [
             {
-                "query": {"domain": domain_clean},
-                "checked_at": utcnow_iso(),
-                "sections": [
-                    {
-                        "name": r.section,
-                        "status": r.status,
-                        "message": r.message,
-                        **asdict(r),  # exposes payload too; section/status repeat is benign
-                    }
-                    for r in results
-                ],
+                "name": r.section,
+                "status": r.status,
+                "message": r.message,
+                **asdict(r),  # exposes payload too; section/status repeat is benign
             }
-        )
+            for r in results
+        ],
+    }
+    if output is not None:
+        append_jsonl(output, "domain", payload)
+    if json_output:
+        print_json(payload)
         return
 
     for r in results:

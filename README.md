@@ -53,7 +53,13 @@ The author provides this software "as is" and disclaims liability for misuse. Se
   `dnspython`), and **subdomain enumeration** from Certificate Transparency logs
   (via `crt.sh`). Section-selectable with `--section`.
 - `breach` — Lookup against Have I Been Pwned + DDoSecrets release index.
+- `password` — Check a password against HIBP's PwnedPasswords corpus via
+  [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity). Your password
+  never leaves your machine.
 - `--json` flag on every command for clean piping into `jq`, files, or other tooling.
+- `--output FILE` flag on every command to append the JSON result as one
+  JSONL record to a case file — accumulate an entire investigation across
+  multiple invocations into one file `jq` and `grep` can read directly.
 - Polite scraping by default (configurable delay, identifiable User-Agent).
 - Typed throughout, `mypy --strict` clean, formatted with `ruff`.
 
@@ -77,7 +83,8 @@ osint-investigator/
 │       ├── username_module.py  # Sherlock-backed handle probe
 │       ├── sherlock_sites.py   # Sherlock data.json loader + site selection
 │       ├── domain_module.py    # RDAP + DNS + crt.sh
-│       └── breach_module.py    # HIBP + DDoSecrets
+│       ├── breach_module.py    # HIBP + DDoSecrets
+│       └── password_module.py  # HIBP PwnedPasswords k-anonymity check
 └── tests/                  # pytest suite (offline; fixtures under tests/fixtures/)
 ```
 

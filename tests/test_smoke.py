@@ -5,10 +5,15 @@ These do not hit the network. Run with `pytest`.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from typer.testing import CliRunner
 
 from osint_investigator.cli import app
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 runner = CliRunner()
 
@@ -71,6 +76,52 @@ def test_clickable_passes_through_when_url_missing() -> None:
     assert clickable(None) == ""
     assert clickable("") == ""
     assert clickable(None, display="fallback") == "fallback"
+
+
+def test_append_jsonl_writes_one_record_per_line(tmp_path: Path) -> None:
+    """append_jsonl should produce a real JSONL file: one JSON object per line."""
+    import json as stdlib_json
+
+    from osint_investigator.utils import append_jsonl
+
+    case = tmp_path / "case.jsonl"
+    append_jsonl(case, "email", {"query": "a@b.com", "results": [{"name": "x"}]})
+    append_jsonl(case, "username", {"query": "alice", "total": 3})
+    append_jsonl(case, "breach", {"query": "a@b.com", "total_hits": 1})
+
+    lines = case.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 3
+    records = [stdlib_json.loads(line) for line in lines]
+    assert [r["command"] for r in records] == ["email", "username", "breach"]
+    # Every record gets a recorded_at timestamp.
+    assert all("recorded_at" in r for r in records)
+    # Payload keys are preserved alongside command + recorded_at.
+    assert records[0]["query"] == "a@b.com"
+    assert records[1]["total"] == 3
+
+
+def test_append_jsonl_creates_parent_directories(tmp_path: Path) -> None:
+    """A nested path that doesn't exist yet should be created on first append."""
+    from osint_investigator.utils import append_jsonl
+
+    nested = tmp_path / "cases" / "2026" / "subject-x.jsonl"
+    assert not nested.parent.exists()
+    append_jsonl(nested, "email", {"query": "a@b"})
+    assert nested.exists()
+    assert nested.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_append_jsonl_does_not_overwrite_existing_recorded_at(tmp_path: Path) -> None:
+    """If the caller pre-populates recorded_at, append_jsonl respects it."""
+    import json as stdlib_json
+
+    from osint_investigator.utils import append_jsonl
+
+    case = tmp_path / "case.jsonl"
+    fixed = "2026-01-01T00:00:00Z"
+    append_jsonl(case, "email", {"query": "x", "recorded_at": fixed})
+    record = stdlib_json.loads(case.read_text(encoding="utf-8"))
+    assert record["recorded_at"] == fixed
 
 
 def test_username_list_sites_json_serialisable() -> None:

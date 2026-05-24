@@ -17,6 +17,7 @@ from rich.json import JSON as RichJSON  # noqa: N811 — alias avoids clash with
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
 # A single shared Console instance avoids re-creating styles on every print.
 console = Console()
@@ -64,6 +65,32 @@ def dedupe_preserving_order(items: Iterable[str]) -> list[str]:
             seen.add(item)
             out.append(item)
     return out
+
+
+def append_jsonl(path: Path, command: str, payload: dict[str, Any]) -> None:
+    """Append one JSONL record to ``path``, creating parent dirs if needed.
+
+    Use this from every CLI command so an investigator can accumulate an
+    entire case across multiple invocations into a single file:
+
+        $ osint-investigator email --email x@y --output case.jsonl
+        $ osint-investigator username -u handle --output case.jsonl
+        $ osint-investigator breach -q x@y --output case.jsonl
+        $ cat case.jsonl | jq 'select(.command == "username")'
+
+    The record is the command's normal JSON payload plus a ``command``
+    field (which command produced this line) and ``recorded_at`` (when the
+    line was appended). Existing keys in the payload are preserved.
+
+    JSONL is one JSON object per line, no commas, no array wrapping —
+    designed to be appended to and tailed by tools like jq, fx, and grep.
+    """
+    record = {"command": command, **payload}
+    record.setdefault("recorded_at", utcnow_iso())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        json.dump(record, f, default=str, ensure_ascii=False)
+        f.write("\n")
 
 
 def clickable(url: str | None, display: str | None = None) -> str:
