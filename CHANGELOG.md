@@ -5,6 +5,12 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.1] — 2026-08-04
+
+### Changed
+
+- Raised minimum versions for several core dependencies (typer, playwright, pydantic, tenacity, ruff) to keep the tool on modern, well-supported releases.
+
 ## [0.5.0] — 2026-05-24
 
 ### Added
@@ -74,12 +80,12 @@ empty-results handling.
   (or JSON document, or appends one JSONL record to a case file).
 
   ```
-  $ osint-investigator profile \
-      --email   alice@example.com  \
-      --username alice42           \
-      --first   Alice --last Smith \
-      --domain  example.com        \
-      --report  case.md            \
+  $ osint-investigator profile \\
+      --email   alice@example.com  \\
+      --username alice42           \\
+      --first   Alice --last Smith \\
+      --domain  example.com        \\
+      --report  case.md            \\
       --output  case.jsonl
   ```
 
@@ -219,6 +225,7 @@ and the k-anonymity range parser; `test_smoke.py` covers `append_jsonl`
 - CI on Python 3.10/3.11/3.12 × ubuntu/macos.
 - MIT license, code of conduct, contributing guide, issue templates.
 
+[0.5.1]: https://github.com/J4y35/osint-investigator/releases/tag/v0.5.1
 [0.5.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.5.0
 [0.4.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.4.0
 [0.3.0]: https://github.com/J4y35/osint-investigator/releases/tag/v0.3.0
