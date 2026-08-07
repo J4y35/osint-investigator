@@ -5,6 +5,23 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.2] — 2026-08-07
+
+### Fixed
+
+- `--version` (and the CLI banner) reported `0.5.0` on a 0.5.1 install. The
+  0.5.1 bump updated `pyproject.toml` but not the hard-coded `__version__`
+  literal in `osint_investigator/__init__.py`, so the two drifted.
+
+### Changed
+
+- `__version__` is now read from installed distribution metadata via
+  `importlib.metadata`, making `pyproject.toml` the single source of truth.
+  The version can no longer drift on a release bump.
+- `test_version_flag` now asserts the CLI output matches distribution
+  metadata instead of comparing `__version__` against itself, which was
+  tautological and is why the drift went unnoticed.
+
 ## [0.5.1] — 2026-08-04
 
 ### Changed

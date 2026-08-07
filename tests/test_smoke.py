@@ -33,11 +33,23 @@ def test_domain_rejects_invalid_input() -> None:
 
 
 def test_version_flag() -> None:
+    """`--version` must report the installed distribution version.
+
+    Asserting against `importlib.metadata` rather than against `__version__`
+    is deliberate: comparing the CLI output to the same constant it prints is
+    tautological and cannot catch a release bump that misses one of the two
+    places a version is recorded.
+    """
+    from importlib.metadata import version
+
     from osint_investigator import __version__
+
+    dist_version = version("osint-investigator")
 
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert __version__ in result.stdout
+    assert dist_version in result.stdout
+    assert __version__ == dist_version
 
 
 @pytest.mark.parametrize("bad", ["", "not-an-email", "foo@", "@bar.com"])
