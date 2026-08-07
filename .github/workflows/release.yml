@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -42,7 +42,9 @@ jobs:
         run: python -m build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        # Default `archive: true` (zip) is retained deliberately — the publish
+        # job's download-artifact@v8 only auto-decompresses zipped artifacts.
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -60,7 +62,9 @@ jobs:
       id-token: write
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        # Downloading by name, not by ID — the v5 breaking change to path
+        # handling applies only to downloads by ID, so it does not bite here.
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
