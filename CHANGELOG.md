@@ -5,6 +5,20 @@ All notable changes to **osint-investigator** are documented here.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/)
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Dev dependency floors raised to the versions CI actually exercises
+  (pytest 9.1, pytest-asyncio 1.4, pytest-cov 7.1, mypy 2.3) and given upper
+  bounds. Previously the floors were low enough that every clean CI install
+  resolved whatever majors happened to be newest that day, so an upstream
+  release could turn the build red with no commit to attribute it to. Runtime
+  dependencies remain uncapped, which is correct for a library.
+
+> **Note:** 0.5.1 was tagged in the changelog but never published to PyPI —
+> the published sequence runs 0.5.0 → 0.5.2.
+
 ## [0.5.2] — 2026-08-07
 
 ### Fixed
